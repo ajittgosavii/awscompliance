@@ -270,10 +270,18 @@ def render_dashboard():
             # Create a dataframe for services
             services_data = []
             for service in layer['services']:
+                # Get the first metric after name and status
+                metric_items = list(service.items())[2:]  # Skip 'name' and 'status'
+                if metric_items:
+                    key, value = metric_items[0]
+                    metric_str = f"{key}: {value}"
+                else:
+                    metric_str = "N/A"
+                
                 services_data.append({
                     'Service': service['name'],
                     'Status': service['status'],
-                    'Key Metric': list(service.items())[2] if len(service.items()) > 2 else ('', '')
+                    'Key Metric': metric_str
                 })
             
             df = pd.DataFrame(services_data)
