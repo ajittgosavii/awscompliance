@@ -394,10 +394,10 @@ def render_e2e_workflow():
         </div>
         """, unsafe_allow_html=True)
         
-        # Auto-advance
-        time.sleep(1.5)
-        st.session_state.e2e_stage += 1
-        st.rerun()
+        # Manual advance button
+        if st.button("▶️ Next Stage", key="next_stage"):
+            st.session_state.e2e_stage += 1
+            st.rerun()
     
     elif st.session_state.e2e_stage >= len(stages):
         st.success("✅ **Workflow Completed Successfully!**")
@@ -762,8 +762,9 @@ def render_simulation():
     
     # Simulation area
     if st.session_state.simulation_running:
-        # Generate new finding
-        if random.random() > 0.6:  # 40% chance each iteration
+        # Add a manual trigger button
+        if st.button("🎲 Generate New Activity", use_container_width=True):
+            # Generate new finding
             new_finding = random.choice(SAMPLE_FINDINGS)
             finding_with_time = {
                 **new_finding,
@@ -781,9 +782,8 @@ def render_simulation():
                     'status': 'Success'
                 }
                 st.session_state.remediation_logs.insert(0, remediation)
-        
-        time.sleep(2)
-        st.rerun()
+            
+            st.rerun()
     
     # Display live findings
     if st.session_state.findings:
