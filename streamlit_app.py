@@ -1,927 +1,888 @@
-"""
-Enterprise Multi-Account AWS Compliance Platform
-Version: 2.0 Enterprise Edition
-
-Features:
-- Authentication & Authorization
-- Audit Logging  
-- Advanced Caching
-- Real Export Functions
-- Professional UI/UX
-- Role-Based Access Control
-"""
-
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from datetime import datetime, timedelta
-import json
-from typing import Dict, List, Any, Optional
-import random
-import hashlib
-import io
-import base64
 import time
-import logging
+import random
+from datetime import datetime, timedelta
 
-# ============================================================================
-# ENTERPRISE CONFIGURATION
-# ============================================================================
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-class AppConfig:
-    APP_NAME = "AWS Compliance Platform"
-    VERSION = "2.0 Enterprise"
-    COMPANY_NAME = "Enterprise Security Operations"
-    SESSION_TIMEOUT = 3600
-    MAX_ACCOUNTS = 950
-    CACHE_TTL = 300
-    ENABLE_AUTH = False  # Set True to enable authentication
-    ENABLE_AUDIT_LOG = True
-    ENABLE_EXPORT = True
-
-# Page Configuration
+# Page configuration
 st.set_page_config(
-    page_title=f"{AppConfig.APP_NAME} - Enterprise Edition",
-    page_icon="🔐",
+    page_title="Multi-Account Compliance Platform",
+    page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="expanded",
-    menu_items={
-        'Get Help': 'https://docs.aws.amazon.com/security',
-        'Report a bug': 'mailto:security@company.com',
-        'About': f"{AppConfig.APP_NAME} v{AppConfig.VERSION}"
-    }
+    initial_sidebar_state="expanded"
 )
 
-# ============================================================================
-# ENTERPRISE CSS - PROFESSIONAL STYLING
-# ============================================================================
-
+# Custom CSS
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-}
-
-.main {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-}
-
-.enterprise-header {
-    background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
-    color: white;
-    padding: 2.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    margin-bottom: 2rem;
-    text-align: center;
-}
-
-.enterprise-header h1 {
-    font-size: 3rem;
-    font-weight: 700;
-    margin: 0;
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-}
-
-.enterprise-header p {
-    font-size: 1.1rem;
-    opacity: 0.95;
-    margin-top: 0.75rem;
-}
-
-.section-header {
-    background: white;
-    padding: 1.25rem 1.75rem;
-    border-radius: 0.75rem;
-    border-left: 5px solid #3B82F6;
-    margin: 2rem 0 1rem 0;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-
-.section-header h2 {
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: #1E3A8A;
-    margin: 0;
-}
-
-.metric-card {
-    background: white;
-    padding: 2rem;
-    border-radius: 1rem;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    border-left: 5px solid #3B82F6;
-    position: relative;
-    overflow: hidden;
-}
-
-.metric-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #3B82F6 0%, #10B981 100%);
-}
-
-.metric-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 16px 48px rgba(59, 130, 246, 0.25);
-}
-
-.metric-value {
-    font-size: 3rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    line-height: 1;
-}
-
-.metric-label {
-    font-size: 0.9rem;
-    color: #64748B;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-top: 0.75rem;
-    font-weight: 600;
-}
-
-.success-card {
-    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
-    border-left: 5px solid #10B981;
-    padding: 1.5rem;
-    border-radius: 0.75rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
-}
-
-.warning-card {
-    background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
-    border-left: 5px solid #F59E0B;
-    padding: 1.5rem;
-    border-radius: 0.75rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
-}
-
-.danger-card {
-    background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
-    border-left: 5px solid #EF4444;
-    padding: 1.5rem;
-    border-radius: 0.75rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
-}
-
-.info-card {
-    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
-    border-left: 5px solid #3B82F6;
-    padding: 1.5rem;
-    border-radius: 0.75rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-}
-
-.stButton>button {
-    background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
-    color: white;
-    border: none;
-    border-radius: 0.75rem;
-    padding: 1rem 2.5rem;
-    font-weight: 700;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.stButton>button:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.5);
-}
-
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #1E3A8A 0%, #2563EB 100%);
-}
-
-[data-testid="stSidebar"] * {
-    color: white !important;
-}
-
-.stTabs [data-baseweb="tab-list"] {
-    gap: 1.5rem;
-    background: white;
-    padding: 1.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-}
-
-.stTabs [data-baseweb="tab"] {
-    background: transparent;
-    border-radius: 0.75rem;
-    padding: 1rem 2rem;
-    font-weight: 700;
-    font-size: 1.05rem;
-    color: #64748B;
-    transition: all 0.3s ease;
-}
-
-.stTabs [aria-selected="true"] {
-    background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
-    color: white !important;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-thead tr th {
-    background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%) !important;
-    color: white !important;
-    font-weight: 700 !important;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.1em;
-    padding: 1rem !important;
-}
-
-tbody tr:hover {
-    background: linear-gradient(90deg, #EFF6FF 0%, #DBEAFE 50%, #EFF6FF 100%) !important;
-    transform: scale(1.01);
-}
-
-::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
-}
-
-::-webkit-scrollbar-track {
-    background: linear-gradient(180deg, #F1F5F9 0%, #E2E8F0 100%);
-    border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #1E3A8A 0%, #3B82F6 100%);
-    border-radius: 10px;
-    border: 2px solid #F1F5F9;
-}
-
-.alert-badge {
-    display: inline-block;
-    padding: 0.4rem 1rem;
-    border-radius: 2rem;
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-}
-
-.badge-critical {
-    background: linear-gradient(135deg, #FEE2E2 0%, #FCA5A5 100%);
-    color: #991B1B;
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
-}
-
-.badge-high {
-    background: linear-gradient(135deg, #FED7AA 0%, #FDBA74 100%);
-    color: #9A3412;
-    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-}
-
-.badge-medium {
-    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-    color: #92400E;
-    box-shadow: 0 2px 8px rgba(234, 179, 8, 0.3);
-}
-
-.badge-low {
-    background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
-    color: #065F46;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-.user-badge {
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(20px);
-    padding: 1rem 1.5rem;
-    border-radius: 1rem;
-    color: white;
-    font-weight: 700;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.stProgress > div > div > div > div {
-    background: linear-gradient(90deg, #10B981 0%, #3B82F6 50%, #8B5CF6 100%);
-}
+    .main-header {
+        background: linear-gradient(to right, #2563eb, #9333ea, #2563eb);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    .metric-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 0.5rem 0;
+    }
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .critical { background: #fee2e2; color: #991b1b; }
+    .high { background: #fed7aa; color: #9a3412; }
+    .medium { background: #fef3c7; color: #92400e; }
+    .low { background: #dbeafe; color: #1e40af; }
+    .active { background: #d1fae5; color: #065f46; }
+    .stProgress > div > div > div > div {
+        background-color: #3b82f6;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# ============================================================================
-# AUTHENTICATION SYSTEM
-# ============================================================================
+# Initialize session state
+if 'active_view' not in st.session_state:
+    st.session_state.active_view = 'dashboard'
+if 'simulation_running' not in st.session_state:
+    st.session_state.simulation_running = False
+if 'e2e_running' not in st.session_state:
+    st.session_state.e2e_running = False
+if 'e2e_stage' not in st.session_state:
+    st.session_state.e2e_stage = 0
+if 'findings' not in st.session_state:
+    st.session_state.findings = []
+if 'remediation_logs' not in st.session_state:
+    st.session_state.remediation_logs = []
 
-class AuthManager:
-    USERS = {
-        "admin": {
-            "password": hashlib.sha256("admin123".encode()).hexdigest(),
-            "role": "admin",
-            "email": "admin@company.com",
-            "name": "System Administrator"
-        },
-        "analyst": {
-            "password": hashlib.sha256("analyst123".encode()).hexdigest(),
-            "role": "analyst",
-            "email": "analyst@company.com",
-            "name": "Security Analyst"
-        },
-        "viewer": {
-            "password": hashlib.sha256("viewer123".encode()).hexdigest(),
-            "role": "viewer",
-            "email": "viewer@company.com",
-            "name": "Compliance Viewer"
-        }
-    }
-    
-    @staticmethod
-    def hash_password(password: str) -> str:
-        return hashlib.sha256(password.encode()).hexdigest()
-    
-    @staticmethod
-    def authenticate(username: str, password: str) -> Optional[Dict]:
-        user = AuthManager.USERS.get(username)
-        if user and user["password"] == AuthManager.hash_password(password):
-            return user
-        return None
-    
-    @staticmethod
-    def has_permission(required_role: str) -> bool:
-        if 'user_role' not in st.session_state:
-            return True  # Allow all if auth disabled
-        
-        role_hierarchy = {'viewer': 1, 'analyst': 2, 'admin': 3}
-        user_level = role_hierarchy.get(st.session_state.user_role, 0)
-        required_level = role_hierarchy.get(required_role, 3)
-        return user_level >= required_level
-
-def log_audit_event(action: str, details: str, status: str = "SUCCESS"):
-    if not AppConfig.ENABLE_AUDIT_LOG:
-        return
-    
-    if 'audit_log' not in st.session_state:
-        st.session_state.audit_log = []
-    
-    event = {
-        'timestamp': datetime.now().isoformat(),
-        'user': st.session_state.get('username', 'anonymous'),
-        'action': action,
-        'details': details,
-        'status': status
-    }
-    
-    st.session_state.audit_log.append(event)
-    logger.info(f"AUDIT: {event}")
-
-# ============================================================================
-# DATA GENERATION WITH CACHING
-# ============================================================================
-
-@st.cache_data(ttl=AppConfig.CACHE_TTL)
-def generate_account_data(num_accounts: int = 950) -> pd.DataFrame:
-    portfolios = {
-        'Production': {'range': range(300), 'compliance': (95, 99)},
-        'Development': {'range': range(300, 750), 'compliance': (90, 96)},
-        'Training': {'range': range(750, num_accounts), 'compliance': (85, 92)}
-    }
-    
-    data = []
-    for portfolio, config in portfolios.items():
-        for i in config['range']:
-            account_id = f"{1234567890123 + i}"
-            compliance_score = random.uniform(*config['compliance'])
-            critical = random.randint(0, 3)
-            high = random.randint(0, 8)
-            medium = random.randint(0, 15)
-            
-            data.append({
-                'Account ID': account_id,
-                'Portfolio': portfolio,
-                'Compliance Score': round(compliance_score, 2),
-                'Active Findings': critical + high + medium,
-                'Critical Findings': critical,
-                'High Findings': high,
-                'Medium Findings': medium,
-                'Status': 'Compliant' if compliance_score >= 95 else 'Non-Compliant',
-                'Owner': random.choice(['team-a', 'team-b', 'team-c'])
-            })
-    
-    return pd.DataFrame(data)
-
-@st.cache_data(ttl=AppConfig.CACHE_TTL)
-def generate_compliance_framework_data() -> pd.DataFrame:
-    frameworks = [
-        {'name': 'PCI DSS', 'version': 'v4.0', 'controls': 275},
-        {'name': 'HIPAA', 'version': '2022', 'controls': 142},
-        {'name': 'GDPR', 'version': '2023', 'controls': 189},
-        {'name': 'SOC 2', 'version': 'Type II', 'controls': 156},
-        {'name': 'CIS Benchmarks', 'version': 'v8', 'controls': 234}
-    ]
-    
-    data = []
-    for framework in frameworks:
-        passing = random.randint(int(framework['controls'] * 0.90), framework['controls'])
-        data.append({
-            'Framework': framework['name'],
-            'Version': framework['version'],
-            'Total Controls': framework['controls'],
-            'Passing': passing,
-            'Failing': framework['controls'] - passing,
-            'Compliance %': round((passing / framework['controls']) * 100, 2)
-        })
-    
-    return pd.DataFrame(data)
-
-@st.cache_data(ttl=AppConfig.CACHE_TTL)
-def generate_findings_timeline(days: int = 30) -> pd.DataFrame:
-    dates = pd.date_range(end=datetime.now(), periods=days, freq='D')
-    severities = ['Critical', 'High', 'Medium', 'Low']
-    
-    data = []
-    for date in dates:
-        for severity in severities:
-            base_count = {'Critical': 3, 'High': 12, 'Medium': 35, 'Low': 45}
-            count = max(0, int(random.gauss(base_count[severity], base_count[severity] * 0.3)))
-            data.append({
-                'Date': date,
-                'Severity': severity,
-                'Count': count
-            })
-    
-    return pd.DataFrame(data)
-
-# ============================================================================
-# EXPORT FUNCTIONS
-# ============================================================================
-
-def export_to_excel(dataframes: Dict[str, pd.DataFrame], filename: str) -> bytes:
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        for sheet_name, df in dataframes.items():
-            df.to_excel(writer, sheet_name=sheet_name, index=False)
-    return output.getvalue()
-
-def export_to_csv(df: pd.DataFrame) -> bytes:
-    return df.to_csv(index=False).encode('utf-8')
-
-# ============================================================================
-# SIDEBAR
-# ============================================================================
-
-def render_sidebar():
-    with st.sidebar:
-        if AppConfig.ENABLE_AUTH and st.session_state.get('authenticated'):
-            st.markdown(f"""
-                <div class="user-badge">
-                    <div style="font-size: 0.9rem; opacity: 0.85;">Logged in as</div>
-                    <div style="font-size: 1.25rem; margin-top: 0.25rem;">{st.session_state.user_name}</div>
-                    <div style="font-size: 0.8rem; opacity: 0.75; margin-top: 0.25rem;">{st.session_state.user_role.upper()}</div>
-                </div>
-            """, unsafe_allow_html=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            if st.button("🚪 Logout", use_container_width=True):
-                log_audit_event("LOGOUT", f"User logged out")
-                for key in list(st.session_state.keys()):
-                    del st.session_state[key]
-                st.rerun()
-        
-        st.markdown("---")
-        
-        page = st.radio(
-            "📋 Navigation",
-            ["🏠 Executive Dashboard", "📊 Compliance Status", "🔍 Security Findings", 
-             "🤖 AI Insights & Recommendations", "⚙️ Architecture Overview", "📈 Reports & Analytics",
-             "👥 Administration"],
-            label_visibility="visible"
-        )
-        
-        st.markdown("---")
-        st.markdown("### 📊 Quick Stats")
-        
-        account_data = generate_account_data()
-        st.metric("Total Accounts", f"{len(account_data):,}")
-        st.metric("Avg Compliance", f"{account_data['Compliance Score'].mean():.1f}%", "+1.2%")
-        st.metric("Active Findings", f"{account_data['Active Findings'].sum():,}", "-127")
-        
-        st.markdown("---")
-        st.markdown(f"""
-            <div style='text-align: center; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 0.5rem;'>
-                <div style='font-weight: 700; font-size: 1.1rem;'>{AppConfig.APP_NAME}</div>
-                <div style='font-size: 0.85rem; opacity: 0.8; margin-top: 0.25rem;'>v{AppConfig.VERSION}</div>
-                <div style='font-size: 0.75rem; opacity: 0.7; margin-top: 0.5rem;'>© 2024 {AppConfig.COMPANY_NAME}</div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        return page
-
-# Continue in next part due to length...
-
-# ============================================================================
-# PAGES
-# ============================================================================
-
-def show_executive_dashboard():
-    st.markdown(f"""
-        <div class="enterprise-header">
-            <h1>🔐 Executive Compliance Dashboard</h1>
-            <p>Real-time monitoring across {AppConfig.MAX_ACCOUNTS} AWS accounts • Last updated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    account_data = generate_account_data()
-    
-    st.markdown('<div class="section-header"><h2>📊 Key Performance Indicators</h2></div>', unsafe_allow_html=True)
-    
-    col1, col2, col3, col4, col5 = st.columns(5)
-    
-    metrics = [
-        ("950", "Total Accounts", "+5 this month"),
-        (f"{account_data['Compliance Score'].mean():.1f}%", "Compliance Score", "+1.2%"),
-        (f"{account_data['Active Findings'].sum():,}", "Active Findings", "-127"),
-        ("92.4%", "Auto-Remediation", "+2.3%"),
-        ("142s", "Avg MTTR", "-15s")
-    ]
-    
-    for col, (value, label, delta) in zip([col1, col2, col3, col4, col5], metrics):
-        with col:
-            st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-value">{value}</div>
-                    <div class="metric-label">{label}</div>
-                    <div style="color: #10B981; font-weight: 600; margin-top: 0.5rem;">{delta}</div>
-                </div>
-            """, unsafe_allow_html=True)
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    col_left, col_right = st.columns([2, 1])
-    
-    with col_left:
-        st.markdown('<div class="section-header"><h2>📁 Portfolio Performance</h2></div>', unsafe_allow_html=True)
-        
-        portfolio_summary = account_data.groupby('Portfolio').agg({
-            'Compliance Score': 'mean',
-            'Active Findings': 'sum',
-            'Critical Findings': 'sum'
-        }).round(2).reset_index()
-        
-        fig = px.bar(
-            portfolio_summary,
-            x='Portfolio',
-            y='Compliance Score',
-            color='Compliance Score',
-            color_continuous_scale='RdYlGn',
-            range_color=[85, 100],
-            text='Compliance Score',
-            title="Average Compliance Score by Portfolio"
-        )
-        
-        fig.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-        fig.update_layout(
-            height=400,
-            showlegend=False,
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(family='Inter', size=12),
-            title_font=dict(size=18, color='#1E3A8A')
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-        
-        st.markdown('<div class="section-header"><h2>📈 Findings Trend (30 Days)</h2></div>', unsafe_allow_html=True)
-        
-        timeline_data = generate_findings_timeline()
-        
-        fig = px.area(
-            timeline_data,
-            x='Date',
-            y='Count',
-            color='Severity',
-            color_discrete_map={
-                'Critical': '#EF4444',
-                'High': '#F59E0B',
-                'Medium': '#3B82F6',
-                'Low': '#10B981'
-            },
-            title="Daily Security Findings by Severity"
-        )
-        
-        fig.update_layout(
-            height=400,
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(family='Inter'),
-            title_font=dict(size=18, color='#1E3A8A')
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with col_right:
-        st.markdown('<div class="section-header"><h2>🚦 Service Health</h2></div>', unsafe_allow_html=True)
-        
-        services = [
-            ('Security Hub', '950/950', 'success'),
-            ('AWS Config', '950/950', 'success'),
-            ('GuardDuty', '950/950', 'success'),
-            ('Inspector', '948/950', 'warning'),
-            ('Macie', '950/950', 'success'),
-            ('CloudTrail', '950/950', 'success'),
-            ('Bedrock AI', '1/1', 'success'),
+# Architecture layers data
+ARCHITECTURE_LAYERS = {
+    'aggregation': {
+        'name': 'Aggregation Layer',
+        'color': '#3b82f6',
+        'description': 'Centralized security data collection from all 950 member accounts',
+        'services': [
+            {'name': 'Central Security Hub', 'status': 'Active', 'findings': 247, 'enabled': 950},
+            {'name': 'AWS Config Aggregator', 'status': 'Active', 'findings': 0, 'rules': 145},
+            {'name': 'CloudTrail Organization Trail', 'status': 'Active', 'events': 1234567},
+            {'name': 'GuardDuty Master Account', 'status': 'Active', 'findings': 34, 'threats': 34},
+            {'name': 'EventBridge', 'status': 'Active', 'eventsProcessed': 456789},
+            {'name': 'SNS Topics', 'status': 'Active', 'topics': 12}
         ]
-        
-        for service, accounts, status in services:
-            icon = "🟢" if status == "success" else "🟡"
-            card_class = "success-card" if status == "success" else "warning-card"
-            
-            st.markdown(f"""
-                <div class="{card_class}">
-                    <strong>{icon} {service}</strong><br>
-                    <small style="opacity: 0.85;">{accounts} accounts</small>
-                </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown('<div class="section-header"><h2>⚡ Quick Actions</h2></div>', unsafe_allow_html=True)
-        
-        if st.button("📥 Export Dashboard", use_container_width=True, key="export_dash"):
-            log_audit_event("EXPORT", "Dashboard exported")
-            st.success("✅ Export successful!")
-        
-        if st.button("🔄 Refresh Data", use_container_width=True, key="refresh_dash"):
-            st.cache_data.clear()
-            st.rerun()
+    },
+    'intelligence': {
+        'name': 'Intelligence Layer',
+        'color': '#eab308',
+        'description': 'AI-powered analysis and recommendations using AWS Bedrock',
+        'services': [
+            {'name': 'AWS Bedrock (Claude AI)', 'status': 'Active', 'analysisCompleted': 3456},
+            {'name': 'Knowledge Bases', 'status': 'Active', 'documents': 1234},
+            {'name': 'CVE & Vulnerability Analysis', 'status': 'Active', 'cvesAssessed': 1234},
+            {'name': 'AI Recommendations Engine', 'status': 'Active', 'generated': 892},
+            {'name': 'Contextual Processing', 'status': 'Active', 'contexts': 23}
+        ]
+    },
+    'visualization': {
+        'name': 'Visualization Layer',
+        'color': '#22c55e',
+        'description': 'Executive dashboards and compliance reporting',
+        'services': [
+            {'name': 'Amazon QuickSight', 'status': 'Active', 'dashboards': 34, 'users': 156},
+            {'name': 'Compliance Dashboards', 'status': 'Active', 'frameworks': 4, 'compliance': '92.4%'},
+            {'name': 'Athena Query Engine', 'status': 'Active', 'queries': 2345},
+            {'name': 'S3 Data Lake', 'status': 'Active', 'size': '234TB'},
+            {'name': 'Automated Reports', 'status': 'Active', 'scheduled': 23},
+            {'name': 'Alert Management', 'status': 'Active', 'rules': 67}
+        ]
+    },
+    'orchestration': {
+        'name': 'Orchestration Layer',
+        'color': '#a855f7',
+        'description': 'Automated remediation and workflow orchestration',
+        'services': [
+            {'name': 'Step Functions', 'status': 'Active', 'workflows': 45},
+            {'name': 'Lambda Functions', 'status': 'Active', 'functions': 123},
+            {'name': 'SSM Automation', 'status': 'Active', 'runbooks': 78},
+            {'name': 'Approval Workflows', 'status': 'Active', 'pending': 12},
+            {'name': 'Change Management', 'status': 'Active', 'changes': 234}
+        ]
+    }
+}
 
-def show_compliance_status():
+# Sample findings data
+SAMPLE_FINDINGS = [
+    {
+        'id': 'F001',
+        'title': 'S3 Bucket Publicly Accessible',
+        'severity': 'Critical',
+        'account': 'prod-account-123',
+        'resource': 's3://data-bucket-prod',
+        'framework': 'PCI DSS 3.2.1',
+        'control': '1.2.1',
+        'description': 'S3 bucket allows public read access',
+        'recommendation': 'Remove public access and enable bucket encryption',
+        'status': 'Open'
+    },
+    {
+        'id': 'F002',
+        'title': 'IAM User Without MFA',
+        'severity': 'High',
+        'account': 'dev-account-456',
+        'resource': 'iam-user/john.doe',
+        'framework': 'SOC 2',
+        'control': 'CC6.1',
+        'description': 'IAM user has console access without MFA enabled',
+        'recommendation': 'Enable MFA for all users with console access',
+        'status': 'In Progress'
+    },
+    {
+        'id': 'F003',
+        'title': 'Unencrypted EBS Volume',
+        'severity': 'High',
+        'account': 'prod-account-789',
+        'resource': 'vol-0abc123def456',
+        'framework': 'HIPAA',
+        'control': '164.312(a)(2)(iv)',
+        'description': 'EBS volume is not encrypted at rest',
+        'recommendation': 'Create encrypted snapshot and replace volume',
+        'status': 'Open'
+    },
+    {
+        'id': 'F004',
+        'title': 'Security Group Allows 0.0.0.0/0',
+        'severity': 'Medium',
+        'account': 'staging-account-321',
+        'resource': 'sg-0123456789abcdef',
+        'framework': 'GDPR',
+        'control': 'Article 32',
+        'description': 'Security group allows unrestricted inbound access',
+        'recommendation': 'Restrict access to specific IP ranges',
+        'status': 'Open'
+    },
+    {
+        'id': 'F005',
+        'title': 'RDS Instance Not in VPC',
+        'severity': 'Critical',
+        'account': 'prod-account-123',
+        'resource': 'rds-instance-legacy',
+        'framework': 'PCI DSS 3.2.1',
+        'control': '1.3.4',
+        'description': 'RDS instance is not deployed in a VPC',
+        'recommendation': 'Migrate RDS instance to VPC',
+        'status': 'Open'
+    },
+    {
+        'id': 'F006',
+        'title': 'CloudTrail Logging Disabled',
+        'severity': 'High',
+        'account': 'test-account-654',
+        'resource': 'us-west-2',
+        'framework': 'SOC 2',
+        'control': 'CC7.2',
+        'description': 'CloudTrail logging is not enabled in this region',
+        'recommendation': 'Enable CloudTrail logging for all regions',
+        'status': 'Open'
+    },
+    {
+        'id': 'F007',
+        'title': 'Lambda Function Without Dead Letter Queue',
+        'severity': 'Medium',
+        'account': 'dev-account-456',
+        'resource': 'lambda-function-processor',
+        'framework': 'Best Practice',
+        'control': 'N/A',
+        'description': 'Lambda function does not have a dead letter queue configured',
+        'recommendation': 'Configure DLQ for failed invocations',
+        'status': 'Open'
+    },
+    {
+        'id': 'F008',
+        'title': 'EC2 Instance Missing Security Patches',
+        'severity': 'High',
+        'account': 'prod-account-789',
+        'resource': 'i-0987654321fedcba',
+        'framework': 'HIPAA',
+        'control': '164.308(a)(5)(ii)(B)',
+        'description': '23 critical security patches missing on EC2 instance',
+        'recommendation': 'Apply security patches using SSM Patch Manager',
+        'status': 'In Progress'
+    }
+]
+
+# Compliance metrics
+COMPLIANCE_METRICS = {
+    'PCI DSS': {'score': 94, 'controls_passed': 235, 'controls_total': 250},
+    'HIPAA': {'score': 91, 'controls_passed': 182, 'controls_total': 200},
+    'GDPR': {'score': 96, 'controls_passed': 144, 'controls_total': 150},
+    'SOC 2': {'score': 93, 'controls_passed': 186, 'controls_total': 200}
+}
+
+def render_header():
+    """Render the main header"""
     st.markdown("""
-        <div class="enterprise-header">
-            <h1>📊 Compliance Framework Status</h1>
-            <p>Comprehensive compliance tracking across regulatory frameworks</p>
+    <div class="main-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="margin: 0; font-size: 2rem;">🛡️ Multi-Account Compliance Platform</h1>
+                <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
+                    Centralized Intelligence, Visualization & Automated Remediation across 950 AWS Accounts
+                </p>
+            </div>
+            <div style="text-align: right; background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px;">
+                <p style="margin: 0; font-size: 0.875rem; opacity: 0.9;">Central Management Account</p>
+                <p style="margin: 0; font-size: 2rem; font-weight: bold;">950 Accounts</p>
+                <p style="margin: 0; font-size: 0.75rem; opacity: 0.8;">Real-time monitoring</p>
+            </div>
         </div>
+    </div>
     """, unsafe_allow_html=True)
+
+def render_dashboard():
+    """Render the main dashboard view"""
+    st.markdown("## 📊 Compliance Dashboard")
     
-    framework_data = generate_compliance_framework_data()
+    # Compliance Framework Metrics
+    st.markdown("### Compliance Framework Status")
+    cols = st.columns(4)
+    for idx, (framework, data) in enumerate(COMPLIANCE_METRICS.items()):
+        with cols[idx]:
+            st.metric(
+                label=framework,
+                value=f"{data['score']}%",
+                delta=f"{data['controls_passed']}/{data['controls_total']} controls"
+            )
+            st.progress(data['score'] / 100)
     
-    st.markdown('<div class="section-header"><h2>🎯 Framework Overview</h2></div>', unsafe_allow_html=True)
+    st.markdown("---")
     
-    cols = st.columns(len(framework_data))
+    # Architecture Layers Overview
+    st.markdown("### 🏗️ Platform Architecture Layers")
     
-    for col, (_, row) in zip(cols, framework_data.iterrows()):
-        with col:
-            compliance = row['Compliance %']
-            icon = "✅" if compliance >= 95 else "⚠️" if compliance >= 90 else "❌"
-            card_class = "success-card" if compliance >= 95 else "warning-card" if compliance >= 90 else "danger-card"
+    for layer_id, layer in ARCHITECTURE_LAYERS.items():
+        with st.expander(f"{layer['name']} - {len(layer['services'])} Services", expanded=False):
+            st.markdown(f"**Description:** {layer['description']}")
             
-            st.markdown(f"""
-                <div class="{card_class}" style="text-align: center; padding: 2rem;">
-                    <div style="font-size: 3rem;">{icon}</div>
-                    <h3 style="margin: 1rem 0 0.5rem 0;">{row['Framework']}</h3>
-                    <div style="font-size: 2.5rem; font-weight: 800; color: #1E3A8A; margin: 0.5rem 0;">{compliance:.1f}%</div>
-                    <div style="opacity: 0.8; margin-top: 0.75rem;">
-                        {row['Passing']}/{row['Total Controls']} controls<br>
-                        <small style="opacity: 0.7;">{row['Version']}</small>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
+            # Create a dataframe for services
+            services_data = []
+            for service in layer['services']:
+                services_data.append({
+                    'Service': service['name'],
+                    'Status': service['status'],
+                    'Key Metric': list(service.items())[2] if len(service.items()) > 2 else ('', '')
+                })
+            
+            df = pd.DataFrame(services_data)
+            st.dataframe(df, use_container_width=True, hide_index=True)
     
-    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("---")
     
-    col1, col2 = st.columns([2, 1])
+    # Key Platform Metrics
+    st.markdown("### 📈 Platform Performance Metrics")
+    
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.markdown('<div class="section-header"><h2>📊 Controls Status</h2></div>', unsafe_allow_html=True)
-        
-        fig = go.Figure()
-        
-        fig.add_trace(go.Bar(
-            name='Passing',
-            x=framework_data['Framework'],
-            y=framework_data['Passing'],
-            marker_color='#10B981',
-            text=framework_data['Passing'],
-            textposition='inside'
-        ))
-        
-        fig.add_trace(go.Bar(
-            name='Failing',
-            x=framework_data['Framework'],
-            y=framework_data['Failing'],
-            marker_color='#EF4444',
-            text=framework_data['Failing'],
-            textposition='inside'
-        ))
-        
-        fig.update_layout(
-            barmode='stack',
-            height=450,
-            title="Compliance Controls Status by Framework",
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(family='Inter'),
-            title_font=dict(size=18, color='#1E3A8A')
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
+        st.markdown("""
+        <div class="metric-card">
+            <h4 style="margin-top: 0;">Total Findings</h4>
+            <h2 style="color: #ef4444; margin: 0.5rem 0;">247</h2>
+            <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">18 Critical, 67 High</p>
+        </div>
+        """, unsafe_allow_html=True)
     
     with col2:
-        st.markdown('<div class="section-header"><h2>📋 Status Summary</h2></div>', unsafe_allow_html=True)
-        
-        for _, row in framework_data.iterrows():
-            st.markdown(f"""
-                <div class="metric-card">
-                    <strong style="font-size: 1.1rem;">{row['Framework']}</strong>
-                    <div style="margin: 1rem 0;">
-                        <div style="background: #E5E7EB; height: 12px; border-radius: 6px; overflow: hidden;">
-                            <div style="background: linear-gradient(90deg, #10B981 0%, #3B82F6 100%); height: 100%; width: {row['Compliance %']}%; transition: width 1s ease;"></div>
-                        </div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; opacity: 0.8;">
-                        <span>Passing: {row['Passing']}</span>
-                        <span>Failing: {row['Failing']}</span>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-    
-    if AppConfig.ENABLE_EXPORT:
-        st.markdown("<br>", unsafe_allow_html=True)
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            if st.button("📊 Export to Excel", use_container_width=True):
-                excel_data = export_to_excel({'Compliance': framework_data}, 'compliance.xlsx')
-                st.download_button(
-                    "⬇️ Download Excel",
-                    excel_data,
-                    "compliance_report.xlsx",
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
-                )
-                log_audit_event("EXPORT", "Compliance exported to Excel")
-        
-        with col2:
-            if st.button("📄 Export to CSV", use_container_width=True):
-                csv_data = export_to_csv(framework_data)
-                st.download_button(
-                    "⬇️ Download CSV",
-                    csv_data,
-                    "compliance_report.csv",
-                    "text/csv",
-                    use_container_width=True
-                )
-
-def show_findings():
-    st.markdown("""
-        <div class="enterprise-header">
-            <h1>🔍 Security Findings Analysis</h1>
-            <p>Detailed security findings and remediation tracking</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    st.info("🔍 Security Findings page with advanced filtering and drill-down capabilities")
-
-def show_ai_insights():
-    st.markdown("""
-        <div class="enterprise-header">
-            <h1>🤖 AI-Powered Security Insights</h1>
-            <p>Intelligent recommendations powered by AWS Bedrock</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    st.info("🤖 AI Insights with machine learning recommendations")
-
-def show_architecture():
-    st.markdown("""
-        <div class="enterprise-header">
-            <h1>⚙️ Platform Architecture</h1>
-            <p>Enterprise security architecture overview</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    st.info("⚙️ Architecture diagrams and component details")
-
-def show_reports():
-    st.markdown("""
-        <div class="enterprise-header">
-            <h1>📈 Reports & Analytics</h1>
-            <p>Comprehensive reporting and data analytics</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    st.info("📈 Advanced reporting with export capabilities")
-
-def show_administration():
-    if not AuthManager.has_permission('admin'):
-        st.error("🔒 Access Denied: Admin privileges required")
-        return
-    
-    st.markdown("""
-        <div class="enterprise-header">
-            <h1>👥 Administration</h1>
-            <p>System administration and audit logs</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    tab1, tab2 = st.tabs(["🔍 Audit Logs", "⚙️ Settings"])
-    
-    with tab1:
-        if 'audit_log' in st.session_state and st.session_state.audit_log:
-            audit_df = pd.DataFrame(st.session_state.audit_log)
-            st.dataframe(audit_df.sort_values('timestamp', ascending=False), use_container_width=True, height=400)
-            
-            if st.button("📥 Export Audit Log"):
-                csv_data = export_to_csv(audit_df)
-                st.download_button(
-                    "⬇️ Download CSV",
-                    csv_data,
-                    f"audit_log_{datetime.now().strftime('%Y%m%d')}.csv",
-                    "text/csv"
-                )
-        else:
-            st.info("No audit events recorded")
-    
-    with tab2:
-        st.markdown("**System Configuration**")
-        st.info(f"Version: {AppConfig.VERSION} | Max Accounts: {AppConfig.MAX_ACCOUNTS}")
-
-# ============================================================================
-# MAIN APPLICATION
-# ============================================================================
-
-def main():
-    if 'authenticated' not in st.session_state:
-        st.session_state.authenticated = not AppConfig.ENABLE_AUTH
-    
-    if AppConfig.ENABLE_AUTH and not st.session_state.authenticated:
         st.markdown("""
-            <div class="enterprise-header">
-                <h1>🔐 AWS Compliance Platform</h1>
-                <p>Enterprise Security Operations Center</p>
-            </div>
+        <div class="metric-card">
+            <h4 style="margin-top: 0;">Accounts Monitored</h4>
+            <h2 style="color: #3b82f6; margin: 0.5rem 0;">950</h2>
+            <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">100% Coverage</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class="metric-card">
+            <h4 style="margin-top: 0;">Auto-Remediated</h4>
+            <h2 style="color: #22c55e; margin: 0.5rem 0;">567</h2>
+            <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">This month</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown("""
+        <div class="metric-card">
+            <h4 style="margin-top: 0;">AI Recommendations</h4>
+            <h2 style="color: #eab308; margin: 0.5rem 0;">892</h2>
+            <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">94% Accuracy</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Recent Activity
+    st.markdown("### 🔔 Recent Activity")
+    activity_data = [
+        {'Time': '2 mins ago', 'Event': 'Critical finding remediated in prod-account-123', 'Type': '✅ Remediation'},
+        {'Time': '15 mins ago', 'Event': 'New security finding detected: S3 bucket exposure', 'Type': '⚠️ Alert'},
+        {'Time': '1 hour ago', 'Event': 'Compliance scan completed across 950 accounts', 'Type': '🔍 Scan'},
+        {'Time': '2 hours ago', 'Event': 'AI recommendation accepted and deployed', 'Type': '🤖 AI Action'},
+        {'Time': '3 hours ago', 'Event': 'Monthly compliance report generated', 'Type': '📄 Report'}
+    ]
+    
+    df_activity = pd.DataFrame(activity_data)
+    st.dataframe(df_activity, use_container_width=True, hide_index=True)
+
+def render_e2e_workflow():
+    """Render the End-to-End Workflow view"""
+    st.markdown("## 🔄 End-to-End Workflow Simulation")
+    
+    st.markdown("""
+    This simulation demonstrates the complete automated workflow from security finding detection 
+    to AI-powered analysis and automated remediation across the 950-account infrastructure.
+    """)
+    
+    st.markdown("---")
+    
+    # Workflow stages
+    stages = [
+        {"name": "1. Detection", "description": "Security Hub aggregates finding from GuardDuty"},
+        {"name": "2. EventBridge Trigger", "description": "Event detected and routed to processing"},
+        {"name": "3. AI Analysis", "description": "Bedrock Claude analyzes severity and context"},
+        {"name": "4. Recommendation", "description": "AI generates remediation recommendation"},
+        {"name": "5. Approval Check", "description": "Determine if auto-remediation is approved"},
+        {"name": "6. Orchestration", "description": "Step Functions triggers remediation workflow"},
+        {"name": "7. Remediation", "description": "Lambda executes fix across accounts"},
+        {"name": "8. Verification", "description": "Config verifies compliance restored"},
+        {"name": "9. Notification", "description": "SNS notifies stakeholders of completion"},
+        {"name": "10. Documentation", "description": "Audit trail stored in S3 Data Lake"}
+    ]
+    
+    # Control buttons
+    col1, col2, col3 = st.columns([1, 1, 4])
+    
+    with col1:
+        if st.button("▶️ Start Simulation", disabled=st.session_state.e2e_running, use_container_width=True):
+            st.session_state.e2e_running = True
+            st.session_state.e2e_stage = 0
+            st.rerun()
+    
+    with col2:
+        if st.button("⏹️ Reset", use_container_width=True):
+            st.session_state.e2e_running = False
+            st.session_state.e2e_stage = 0
+            st.rerun()
+    
+    st.markdown("---")
+    
+    # Display workflow stages
+    if st.session_state.e2e_running and st.session_state.e2e_stage < len(stages):
+        # Progress bar
+        progress = (st.session_state.e2e_stage + 1) / len(stages)
+        st.progress(progress, text=f"Progress: {int(progress * 100)}% - Stage {st.session_state.e2e_stage + 1} of {len(stages)}")
+        
+        # Current stage
+        current_stage = stages[st.session_state.e2e_stage]
+        st.markdown(f"""
+        <div style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 1rem; margin: 1rem 0;">
+            <h3 style="margin-top: 0; color: #1e40af;">⚡ {current_stage['name']}</h3>
+            <p style="margin: 0;">{current_stage['description']}</p>
+        </div>
         """, unsafe_allow_html=True)
         
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            with st.form("login"):
-                st.markdown("### Sign In")
-                username = st.text_input("Username")
-                password = st.text_input("Password", type="password")
-                submit = st.form_submit_button("Sign In", use_container_width=True)
-                
-                if submit:
-                    user = AuthManager.authenticate(username, password)
-                    if user:
-                        st.session_state.authenticated = True
-                        st.session_state.username = username
-                        st.session_state.user_role = user['role']
-                        st.session_state.user_name = user['name']
-                        log_audit_event("LOGIN", f"User {username} logged in")
-                        st.success(f"✅ Welcome, {user['name']}!")
-                        time.sleep(1)
-                        st.rerun()
-                    else:
-                        st.error("❌ Invalid credentials")
+        # Auto-advance
+        time.sleep(1.5)
+        st.session_state.e2e_stage += 1
+        st.rerun()
+    
+    elif st.session_state.e2e_stage >= len(stages):
+        st.success("✅ **Workflow Completed Successfully!**")
+        st.balloons()
+        st.session_state.e2e_running = False
+    
+    # Display all stages
+    st.markdown("### Workflow Stages")
+    for idx, stage in enumerate(stages):
+        if idx < st.session_state.e2e_stage:
+            icon = "✅"
+            style = "background: #d1fae5; border-left: 4px solid #10b981;"
+        elif idx == st.session_state.e2e_stage:
+            icon = "⏳"
+            style = "background: #fef3c7; border-left: 4px solid #eab308;"
+        else:
+            icon = "⏺️"
+            style = "background: #f3f4f6; border-left: 4px solid #9ca3af;"
+        
+        st.markdown(f"""
+        <div style="{style} padding: 0.75rem; margin: 0.5rem 0;">
+            <strong>{icon} {stage['name']}</strong>: {stage['description']}
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Integration Architecture
+    st.markdown("### 🏗️ Integration Architecture")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown("""
+        <div style="background: #1f2937; color: white; padding: 1rem; border-radius: 8px;">
+            <h4 style="margin-top: 0;">💻 External Services</h4>
+            <div style="background: #374151; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
+                <strong>GitHub Repository</strong><br/>
+                <span style="color: #d1d5db;">Policy as Code (IaC)</span>
+            </div>
+            <div style="background: #374151; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
+                <strong>CI/CD Pipeline</strong><br/>
+                <span style="color: #d1d5db;">GitHub Actions</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 1rem; border-radius: 8px;">
+            <h4 style="margin-top: 0; color: #065f46;">☁️ Deployment</h4>
+            <div style="background: white; border: 1px solid #a7f3d0; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
+                <strong style="color: #065f46;">CloudFormation</strong><br/>
+                <span style="color: #047857;">StackSets</span>
+            </div>
+            <div style="background: white; border: 1px solid #a7f3d0; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
+                <strong style="color: #065f46;">950 Accounts</strong><br/>
+                <span style="color: #047857;">Multi-Region</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div style="background: #fef3c7; border: 1px solid #fde68a; padding: 1rem; border-radius: 8px;">
+            <h4 style="margin-top: 0; color: #78350f;">🛡️ Detection & AI</h4>
+            <div style="background: white; border: 1px solid #fde68a; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
+                <strong style="color: #78350f;">Security Hub</strong><br/>
+                <span style="color: #92400e;">Config, GuardDuty</span>
+            </div>
+            <div style="background: white; border: 1px solid #fde68a; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
+                <strong style="color: #78350f;">AWS Bedrock</strong><br/>
+                <span style="color: #92400e;">Claude AI</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown("""
+        <div style="background: #fae8ff; border: 1px solid #e9d5ff; padding: 1rem; border-radius: 8px;">
+            <h4 style="margin-top: 0; color: #581c87;">⚡ Remediation</h4>
+            <div style="background: white; border: 1px solid #e9d5ff; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
+                <strong style="color: #581c87;">Step Functions</strong><br/>
+                <span style="color: #6b21a8;">Orchestration</span>
+            </div>
+            <div style="background: white; border: 1px solid #e9d5ff; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
+                <strong style="color: #581c87;">Lambda</strong><br/>
+                <span style="color: #6b21a8;">Automated Fixes</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+def render_findings():
+    """Render the Security Findings view"""
+    st.markdown("## 🔍 Security Findings")
+    
+    # Filters
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        severity_filter = st.multiselect(
+            "Filter by Severity",
+            options=['Critical', 'High', 'Medium', 'Low'],
+            default=['Critical', 'High', 'Medium', 'Low']
+        )
+    
+    with col2:
+        framework_filter = st.multiselect(
+            "Filter by Framework",
+            options=['PCI DSS 3.2.1', 'SOC 2', 'HIPAA', 'GDPR', 'Best Practice'],
+            default=['PCI DSS 3.2.1', 'SOC 2', 'HIPAA', 'GDPR', 'Best Practice']
+        )
+    
+    with col3:
+        status_filter = st.multiselect(
+            "Filter by Status",
+            options=['Open', 'In Progress', 'Resolved'],
+            default=['Open', 'In Progress']
+        )
+    
+    st.markdown("---")
+    
+    # Filter findings
+    filtered_findings = [
+        f for f in SAMPLE_FINDINGS
+        if f['severity'] in severity_filter
+        and f['framework'] in framework_filter
+        and f['status'] in status_filter
+    ]
+    
+    # Summary metrics
+    col1, col2, col3, col4 = st.columns(4)
+    
+    critical_count = len([f for f in filtered_findings if f['severity'] == 'Critical'])
+    high_count = len([f for f in filtered_findings if f['severity'] == 'High'])
+    medium_count = len([f for f in filtered_findings if f['severity'] == 'Medium'])
+    low_count = len([f for f in filtered_findings if f['severity'] == 'Low'])
+    
+    col1.metric("Critical", critical_count, delta=None)
+    col2.metric("High", high_count, delta=None)
+    col3.metric("Medium", medium_count, delta=None)
+    col4.metric("Low", low_count, delta=None)
+    
+    st.markdown("---")
+    
+    # Display findings
+    for finding in filtered_findings:
+        severity_color = {
+            'Critical': '#fee2e2',
+            'High': '#fed7aa',
+            'Medium': '#fef3c7',
+            'Low': '#dbeafe'
+        }
+        
+        severity_text_color = {
+            'Critical': '#991b1b',
+            'High': '#9a3412',
+            'Medium': '#92400e',
+            'Low': '#1e40af'
+        }
+        
+        with st.expander(f"**{finding['id']}** - {finding['title']} ({finding['severity']})", expanded=False):
+            col1, col2 = st.columns([2, 1])
             
-            st.markdown("""
-                <div class="info-card" style="margin-top: 2rem;">
-                    <strong>🔑 Demo Credentials:</strong><br>
-                    • admin / admin123<br>
-                    • analyst / analyst123<br>
-                    • viewer / viewer123
+            with col1:
+                st.markdown(f"""
+                **Severity:** <span style="background: {severity_color[finding['severity']]}; 
+                color: {severity_text_color[finding['severity']]}; padding: 0.25rem 0.75rem; 
+                border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                {finding['severity']}</span>
+                
+                **Account:** `{finding['account']}`  
+                **Resource:** `{finding['resource']}`  
+                **Framework:** {finding['framework']}  
+                **Control:** {finding['control']}  
+                **Status:** {finding['status']}
+                
+                **Description:**  
+                {finding['description']}
+                
+                **Recommendation:**  
+                {finding['recommendation']}
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown("**Actions**")
+                if st.button(f"🤖 Get AI Recommendation", key=f"ai_{finding['id']}"):
+                    st.info("AI recommendation would be generated here...")
+                if st.button(f"⚡ Auto-Remediate", key=f"rem_{finding['id']}"):
+                    st.success("Remediation workflow initiated!")
+                if st.button(f"📋 View Details", key=f"det_{finding['id']}"):
+                    st.info("Detailed view would open here...")
+
+def render_ai_intelligence():
+    """Render the AI Intelligence view"""
+    st.markdown("## 🤖 AI Intelligence & Recommendations")
+    
+    st.markdown("""
+    The AI Intelligence layer uses AWS Bedrock with Claude AI to provide context-aware 
+    security recommendations, vulnerability analysis, and automated remediation strategies.
+    """)
+    
+    st.markdown("---")
+    
+    # AI Capabilities
+    st.markdown("### AI-Powered Capabilities")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        <div class="metric-card">
+            <h4>🧠 Analysis Completed</h4>
+            <h2 style="color: #3b82f6;">3,456</h2>
+            <p style="font-size: 0.875rem; color: #6b7280;">Across all accounts</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div class="metric-card">
+            <h4>💡 Recommendations Generated</h4>
+            <h2 style="color: #22c55e;">892</h2>
+            <p style="font-size: 0.875rem; color: #6b7280;">234 auto-approved</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class="metric-card">
+            <h4>📊 Accuracy Rate</h4>
+            <h2 style="color: #eab308;">94%</h2>
+            <p style="font-size: 0.875rem; color: #6b7280;">Verified effectiveness</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Recent AI Recommendations
+    st.markdown("### 🎯 Recent AI Recommendations")
+    
+    recommendations = [
+        {
+            'title': 'S3 Bucket Encryption Configuration',
+            'finding': 'F001 - S3 Bucket Publicly Accessible',
+            'confidence': 98,
+            'impact': 'High',
+            'recommendation': 'Enable default encryption with AWS KMS and block all public access at the bucket level. This will maintain data confidentiality while preventing unauthorized access.',
+            'estimated_time': '5 minutes',
+            'automation': 'Available'
+        },
+        {
+            'title': 'MFA Enforcement Strategy',
+            'finding': 'F002 - IAM User Without MFA',
+            'confidence': 95,
+            'impact': 'High',
+            'recommendation': 'Implement organization-wide SCP to enforce MFA for console access. Create automated workflow to notify users and disable console access after 7 days grace period.',
+            'estimated_time': '15 minutes',
+            'automation': 'Partially Available'
+        },
+        {
+            'title': 'EBS Volume Encryption Remediation',
+            'finding': 'F003 - Unencrypted EBS Volume',
+            'confidence': 92,
+            'impact': 'Medium',
+            'recommendation': 'Create encrypted snapshot, launch new volume from snapshot, and replace attachment. Minimal downtime approach available with step-by-step orchestration.',
+            'estimated_time': '30 minutes',
+            'automation': 'Available'
+        }
+    ]
+    
+    for rec in recommendations:
+        with st.expander(f"**{rec['title']}** (Confidence: {rec['confidence']}%)", expanded=False):
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                st.markdown(f"""
+                **Related Finding:** {rec['finding']}  
+                **Impact:** {rec['impact']}  
+                **Estimated Time:** {rec['estimated_time']}  
+                **Automation:** {rec['automation']}
+                
+                **Recommendation:**  
+                {rec['recommendation']}
+                """)
+            
+            with col2:
+                st.markdown(f"**Confidence Score**")
+                st.progress(rec['confidence'] / 100)
+                st.markdown(f"{rec['confidence']}%")
+                
+                if st.button(f"✅ Approve", key=f"app_{rec['title']}"):
+                    st.success("Recommendation approved!")
+                if st.button(f"⚡ Execute", key=f"exe_{rec['title']}"):
+                    st.info("Executing remediation...")
+    
+    st.markdown("---")
+    
+    # AI Model Information
+    st.markdown("### 🔧 AI Model Configuration")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        **Primary Model**  
+        AWS Bedrock - Claude 3.5 Sonnet
+        
+        **Capabilities:**
+        - Security finding analysis
+        - Context-aware recommendations
+        - Compliance mapping
+        - Risk assessment
+        - Remediation planning
+        """)
+    
+    with col2:
+        st.markdown("""
+        **Knowledge Base**  
+        RAG with 1,234 security documents
+        
+        **Sources:**
+        - AWS Security Best Practices
+        - Compliance Framework Documentation
+        - Internal Security Playbooks
+        - CVE Database
+        - Threat Intelligence Feeds
+        """)
+
+def render_simulation():
+    """Render the Live Simulation view"""
+    st.markdown("## ⚡ Live Platform Simulation")
+    
+    st.markdown("""
+    Watch the platform in action with a live simulation of security finding detection, 
+    AI analysis, and automated remediation across the multi-account infrastructure.
+    """)
+    
+    st.markdown("---")
+    
+    # Control panel
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 3])
+    
+    with col1:
+        if st.button("▶️ Start", disabled=st.session_state.simulation_running, use_container_width=True):
+            st.session_state.simulation_running = True
+            st.session_state.findings = []
+            st.session_state.remediation_logs = []
+    
+    with col2:
+        if st.button("⏸️ Pause", disabled=not st.session_state.simulation_running, use_container_width=True):
+            st.session_state.simulation_running = False
+    
+    with col3:
+        if st.button("🔄 Reset", use_container_width=True):
+            st.session_state.simulation_running = False
+            st.session_state.findings = []
+            st.session_state.remediation_logs = []
+            st.rerun()
+    
+    st.markdown("---")
+    
+    # Simulation area
+    if st.session_state.simulation_running:
+        # Generate new finding
+        if random.random() > 0.6:  # 40% chance each iteration
+            new_finding = random.choice(SAMPLE_FINDINGS)
+            finding_with_time = {
+                **new_finding,
+                'detected_at': datetime.now().strftime("%H:%M:%S"),
+                'ai_score': random.randint(85, 99)
+            }
+            st.session_state.findings.insert(0, finding_with_time)
+            
+            # Generate remediation log
+            if random.random() > 0.5:
+                remediation = {
+                    'time': datetime.now().strftime("%H:%M:%S"),
+                    'action': f"Auto-remediated {new_finding['title']}",
+                    'account': new_finding['account'],
+                    'status': 'Success'
+                }
+                st.session_state.remediation_logs.insert(0, remediation)
+        
+        time.sleep(2)
+        st.rerun()
+    
+    # Display live findings
+    if st.session_state.findings:
+        st.markdown("### 🔔 Live Security Findings")
+        
+        for finding in st.session_state.findings[:5]:  # Show last 5
+            severity_color = {
+                'Critical': '#fee2e2',
+                'High': '#fed7aa',
+                'Medium': '#fef3c7',
+                'Low': '#dbeafe'
+            }
+            
+            st.markdown(f"""
+            <div style="background: {severity_color[finding['severity']]}; 
+            padding: 1rem; margin: 0.5rem 0; border-radius: 8px; border-left: 4px solid #ef4444;">
+                <div style="display: flex; justify-content: space-between;">
+                    <div>
+                        <strong>{finding['detected_at']}</strong> - {finding['title']}
+                        <br/><small>Account: {finding['account']} | AI Confidence: {finding['ai_score']}%</small>
+                    </div>
+                    <span style="background: white; padding: 0.25rem 0.75rem; border-radius: 12px; 
+                    font-size: 0.75rem; font-weight: 600;">{finding['severity']}</span>
                 </div>
+            </div>
             """, unsafe_allow_html=True)
-        return
     
-    page = render_sidebar()
+    st.markdown("---")
     
-    if page == "🏠 Executive Dashboard":
-        show_executive_dashboard()
-    elif page == "📊 Compliance Status":
-        show_compliance_status()
-    elif page == "🔍 Security Findings":
-        show_findings()
-    elif page == "🤖 AI Insights & Recommendations":
-        show_ai_insights()
-    elif page == "⚙️ Architecture Overview":
-        show_architecture()
-    elif page == "📈 Reports & Analytics":
-        show_reports()
-    elif page == "👥 Administration":
-        show_administration()
+    # Display remediation logs
+    if st.session_state.remediation_logs:
+        st.markdown("### ✅ Remediation Activity")
+        
+        for log in st.session_state.remediation_logs[:5]:  # Show last 5
+            st.markdown(f"""
+            <div style="background: #d1fae5; padding: 1rem; margin: 0.5rem 0; 
+            border-radius: 8px; border-left: 4px solid #10b981;">
+                <strong>{log['time']}</strong> - {log['action']}
+                <br/><small>Account: {log['account']} | Status: {log['status']}</small>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Statistics
+    if st.session_state.findings or st.session_state.remediation_logs:
+        st.markdown("---")
+        st.markdown("### 📊 Simulation Statistics")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        col1.metric("Total Findings", len(st.session_state.findings))
+        col2.metric("Remediated", len(st.session_state.remediation_logs))
+        col3.metric("Success Rate", f"{min(100, len(st.session_state.remediation_logs) / max(len(st.session_state.findings), 1) * 100):.0f}%")
+        col4.metric("Avg Response Time", "2.3s")
+
+# Main application
+def main():
+    render_header()
+    
+    # Navigation tabs
+    tabs = st.tabs([
+        "📊 Dashboard",
+        "🔄 End-to-End Workflow",
+        "🔍 Security Findings",
+        "🤖 AI Intelligence",
+        "⚡ Live Simulation"
+    ])
+    
+    with tabs[0]:
+        render_dashboard()
+    
+    with tabs[1]:
+        render_e2e_workflow()
+    
+    with tabs[2]:
+        render_findings()
+    
+    with tabs[3]:
+        render_ai_intelligence()
+    
+    with tabs[4]:
+        render_simulation()
+    
+    # Footer
+    st.markdown("---")
+    st.markdown("""
+    <div style="text-align: center; padding: 2rem; color: #6b7280;">
+        <p style="margin: 0;">
+            <strong>Scalable Multi-Account Architecture</strong> • 
+            Consistent Policy Enforcement • 
+            Centralized Intelligence • 
+            Real-Time Compliance
+        </p>
+        <div style="margin-top: 1rem; font-size: 0.875rem;">
+            <span>🛡️ PCI DSS, HIPAA, GDPR, SOC 2</span> • 
+            <span>🤖 AI-Powered Analysis</span> • 
+            <span>⚡ Automated Remediation</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
