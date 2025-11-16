@@ -226,14 +226,74 @@ def get_aws_clients(aws_access_key: str, aws_secret_key: str, region: str):
 # CLAUDE/BEDROCK API CLIENT
 # ============================================================================
 
-@st.cache_resource
+def diagnose_anthropic_setup():
+    """Diagnose Anthropic library setup"""
+    import sys
+    try:
+        import anthropic
+        version = getattr(anthropic, '__version__', 'Unknown')
+        return {
+            'installed': True,
+            'version': version,
+            'module_path': anthropic.__file__ if hasattr(anthropic, '__file__') else 'Unknown'
+        }
+    except ImportError:
+        return {
+            'installed': False,
+            'error': 'Anthropic library not installed'
+        }
+
 def get_claude_client(api_key: str):
     """Initialize Anthropic Claude client"""
+    import os
+    
     try:
-        client = anthropic.Anthropic(api_key=api_key)
-        return client
+        # Clear any proxy environment variables that might interfere
+        proxy_vars = ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy', 
+                     'NO_PROXY', 'no_proxy', 'ALL_PROXY', 'all_proxy']
+        original_env = {}
+        
+        for var in proxy_vars:
+            if var in os.environ:
+                original_env[var] = os.environ[var]
+                del os.environ[var]
+        
+        try:
+            # Initialize Claude client with just the API key
+            client = anthropic.Anthropic(api_key=api_key)
+            
+            # Restore environment variables
+            for var, value in original_env.items():
+                os.environ[var] = value
+                
+            return client
+            
+        except Exception as e:
+            # Restore environment variables even on error
+            for var, value in original_env.items():
+                os.environ[var] = value
+            raise e
+            
+    except TypeError as e:
+        st.error(f"⚠️ Claude client initialization error: {str(e)}")
+        
+        # Show diagnostic info
+        diag = diagnose_anthropic_setup()
+        if diag['installed']:
+            st.warning(f"📦 Anthropic library version: {diag['version']}")
+            st.info("💡 Try upgrading: `pip install --upgrade anthropic`")
+        
+        try:
+            # Last resort: direct initialization
+            import anthropic as ant
+            client = ant.Anthropic(api_key=api_key)
+            return client
+        except Exception as e2:
+            st.error(f"❌ Alternative initialization failed: {str(e2)}")
+            return None
     except Exception as e:
-        st.error(f"Failed to initialize Claude client: {str(e)}")
+        st.error(f"❌ Failed to initialize Claude client: {str(e)}")
+        st.code(f"Error details: {type(e).__name__}: {str(e)}")
         return None
 
 def get_bedrock_client(aws_clients: Dict):
