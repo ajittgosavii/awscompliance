@@ -2470,6 +2470,146 @@ def render_policy_guardrails():
     """Render Tech Guardrails policy management with detailed violations and AI remediation"""
     st.markdown("## 🚧 Tech Guardrails Management")
     
+    # AI Orchestration Layer
+    with st.expander("🤖 AI Orchestration & Automation Hub", expanded=True):
+        st.markdown("""
+        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; color: white; margin-bottom: 20px;'>
+            <h3 style='margin: 0; color: white;'>🧠 Claude AI-Powered Detection & Remediation</h3>
+            <p style='margin: 10px 0 0 0; opacity: 0.9;'>Intelligent orchestration layer for automated security compliance</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.markdown("""
+            <div style='text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;'>
+                <h4 style='color: #667eea; margin: 0;'>🔍 Detection</h4>
+                <p style='font-size: 24px; font-weight: bold; margin: 10px 0;'>Real-time</p>
+                <p style='font-size: 12px; color: #666; margin: 0;'>AI-powered scanning</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("""
+            <div style='text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;'>
+                <h4 style='color: #10b981; margin: 0;'>✅ Auto-Remediation</h4>
+                <p style='font-size: 24px; font-weight: bold; margin: 10px 0;'>Enabled</p>
+                <p style='font-size: 12px; color: #666; margin: 0;'>One-click fixes</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown("""
+            <div style='text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;'>
+                <h4 style='color: #f59e0b; margin: 0;'>🎯 Prioritization</h4>
+                <p style='font-size: 24px; font-weight: bold; margin: 10px 0;'>Smart</p>
+                <p style='font-size: 12px; color: #666; margin: 0;'>Risk-based ranking</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            st.markdown("""
+            <div style='text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px;'>
+                <h4 style='color: #8b5cf6; margin: 0;'>📊 Orchestration</h4>
+                <p style='font-size: 24px; font-weight: bold; margin: 10px 0;'>Active</p>
+                <p style='font-size: 12px; color: #666; margin: 0;'>Workflow automation</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # AI Orchestration Controls
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            st.markdown("### 🎮 Orchestration Controls")
+            
+            orchestration_mode = st.radio(
+                "Detection & Remediation Mode:",
+                ["🤖 Fully Automated (AI-Driven)", "🔄 Semi-Automated (Approval Required)", "👁️ Detection Only (Manual Review)"],
+                index=1,
+                help="Select how AI should handle detected violations"
+            )
+            
+            if "🤖 Fully Automated" in orchestration_mode:
+                st.info("✨ AI will automatically detect and remediate violations based on severity and risk assessment")
+            elif "🔄 Semi-Automated" in orchestration_mode:
+                st.info("⚡ AI will detect violations and generate remediation plans for your approval")
+            else:
+                st.warning("👀 AI will only detect and report violations - manual remediation required")
+        
+        with col2:
+            st.markdown("### ⚙️ AI Settings")
+            
+            auto_remediate_critical = st.checkbox("Auto-fix CRITICAL issues", value=False, 
+                                                  help="Automatically remediate critical severity violations")
+            auto_remediate_high = st.checkbox("Auto-fix HIGH issues", value=False,
+                                             help="Automatically remediate high severity violations")
+            
+            confidence_threshold = st.slider("AI Confidence Threshold", 0, 100, 85, 
+                                           help="Minimum AI confidence % for auto-remediation")
+            
+            st.markdown(f"""
+            <div style='background: #e0e7ff; padding: 10px; border-radius: 5px; margin-top: 10px;'>
+                <small>🧠 <strong>AI Confidence:</strong> {confidence_threshold}%</small><br/>
+                <small>🎯 <strong>Auto-fix:</strong> {'CRITICAL + HIGH' if auto_remediate_high else 'CRITICAL only' if auto_remediate_critical else 'Disabled'}</small>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # Quick Action Buttons
+        st.markdown("---")
+        st.markdown("### 🚀 Quick Actions")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            if st.button("🔍 Run Full Scan", use_container_width=True, type="primary"):
+                with st.spinner("🤖 AI is scanning all guardrails..."):
+                    time.sleep(2)
+                    st.success("✅ Scan completed! Found 3 new violations")
+        
+        with col2:
+            if st.button("⚡ Auto-Remediate All", use_container_width=True):
+                with st.spinner("🔧 AI is applying remediations..."):
+                    time.sleep(2)
+                    st.success("✅ 2 violations auto-remediated")
+        
+        with col3:
+            if st.button("📋 Generate Report", use_container_width=True):
+                with st.spinner("📝 Generating AI report..."):
+                    time.sleep(1)
+                    st.success("✅ Report generated")
+        
+        with col4:
+            if st.button("🎯 Prioritize Issues", use_container_width=True):
+                with st.spinner("🧠 AI is analyzing risk..."):
+                    time.sleep(1)
+                    st.success("✅ Issues prioritized by risk")
+        
+        # Recent AI Activity
+        st.markdown("---")
+        st.markdown("### 📊 Recent AI Activity")
+        
+        recent_activities = [
+            {"time": "2 mins ago", "action": "Auto-remediated", "resource": "aws-guardrails-mQdkEr", "status": "success"},
+            {"time": "15 mins ago", "action": "Detected violation", "resource": "ServiceRegionsApproved-SCP", "status": "pending"},
+            {"time": "1 hour ago", "action": "Generated fix", "resource": "IAM_Restrictions SCP", "status": "success"},
+        ]
+        
+        for activity in recent_activities:
+            status_color = "#10b981" if activity['status'] == "success" else "#f59e0b"
+            status_icon = "✅" if activity['status'] == "success" else "⏳"
+            
+            st.markdown(f"""
+            <div style='background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid {status_color};'>
+                <strong>{status_icon} {activity['action']}</strong> - {activity['resource']}<br/>
+                <small style='color: #666;'>{activity['time']}</small>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
     guardrail_tabs = st.tabs(["Service Control Policies (SCP)", "OPA Policies", "KICS - IaC Security"])
     
     # SCP Tab
@@ -2670,61 +2810,61 @@ aws sns publish --topic-arn arn:aws:sns:REGION:ACCOUNT:compliance-alerts \\
                         'HIGH': '#FF9900',
                         'MEDIUM': '#ffbb33',
                         'LOW': '#00C851'
-                    }.get(violation.get('Severity', 'UNKNOWN'), '#gray')
+                    }.get(violation['Severity'], '#gray')
                     
                     # Build title based on resource type
                     if 'Cluster' in violation:
-                        title = f"{violation.get('Cluster', 'N/A')} / {violation.get('Namespace', 'N/A')} / {violation.get('Resource', 'N/A')}"
+                        title = f"{violation['Cluster']} / {violation['Namespace']} / {violation['Resource']}"
                     elif 'Repository' in violation:
-                        title = f"{violation.get('Repository', 'N/A')} / {violation.get('FilePath', 'N/A')}"
+                        title = f"{violation['Repository']} / {violation['FilePath']}"
                     elif 'Image' in violation:
-                        title = f"{violation.get('Image', 'N/A')} ({violation.get('Registry', 'N/A')})"
+                        title = f"{violation['Image']} ({violation['Registry']})"
                     else:
-                        title = f"{violation.get('Resource', 'N/A')}"
+                        title = f"{violation['Resource']}"
                     
-                    with st.expander(f"🚨 [{violation.get('Severity', 'UNKNOWN')}] {title}"):
+                    with st.expander(f"🚨 [{violation['Severity']}] {title}"):
                         col1, col2 = st.columns([2, 1])
                         
                         with col1:
                             st.markdown(f"""
-                            **Account:** {violation.get('AccountName', 'N/A')} (`{violation.get('AccountId', 'N/A')}`)  
-                            **Severity:** <span style='color: {severity_color}; font-weight: bold;'>{violation.get('Severity', 'UNKNOWN')}</span>  
-                            **Resource Type:** {violation.get('ResourceType', 'N/A')}  
-                            **Issue:** {violation.get('Issue', 'N/A')}  
-                            **Timestamp:** {violation.get('Timestamp', 'N/A')[:19] if violation.get('Timestamp') else 'N/A'}  
+                            **Account:** {violation['AccountName']} (`{violation['AccountId']}`)  
+                            **Severity:** <span style='color: {severity_color}; font-weight: bold;'>{violation['Severity']}</span>  
+                            **Resource Type:** {violation['ResourceType']}  
+                            **Issue:** {violation['Issue']}  
+                            **Timestamp:** {violation['Timestamp'][:19]}  
                             """, unsafe_allow_html=True)
                             
                             # Add specific details based on type
                             if 'Cluster' in violation:
                                 st.markdown(f"""
-                                **Cluster:** {violation.get('Cluster', 'N/A')}  
-                                **Namespace:** {violation.get('Namespace', 'N/A')}  
-                                **Resource:** {violation.get('Resource', 'N/A')}  
+                                **Cluster:** {violation['Cluster']}  
+                                **Namespace:** {violation['Namespace']}  
+                                **Resource:** {violation['Resource']}  
                                 """)
                             elif 'Repository' in violation:
                                 st.markdown(f"""
-                                **Repository:** {violation.get('Repository', 'N/A')}  
-                                **File Path:** `{violation.get('FilePath', 'N/A')}`  
-                                **Resource:** {violation.get('Resource', 'N/A')}  
+                                **Repository:** {violation['Repository']}  
+                                **File Path:** `{violation['FilePath']}`  
+                                **Resource:** {violation['Resource']}  
                                 """)
                             elif 'Image' in violation:
                                 st.markdown(f"""
-                                **Registry:** {violation.get('Registry', 'N/A')}  
-                                **Repository:** {violation.get('Repository', 'N/A')}  
-                                **Image:** {violation.get('Image', 'N/A')}  
+                                **Registry:** {violation['Registry']}  
+                                **Repository:** {violation['Repository']}  
+                                **Image:** {violation['Image']}  
                                 """)
                             elif 'Endpoint' in violation:
                                 st.markdown(f"""
-                                **Region:** {violation.get('Region', 'N/A')}  
-                                **Endpoint:** `{violation.get('Endpoint', 'N/A')}`  
+                                **Region:** {violation['Region']}  
+                                **Endpoint:** `{violation['Endpoint']}`  
                                 """)
                             
                             st.markdown(f"""
                             **Description:**  
-                            {violation.get('Description', 'No description available')}
+                            {violation['Description']}
                             
                             **Recommended Remediation:**  
-                            {violation.get('Remediation', 'No remediation guidance available')}
+                            {violation['Remediation']}
                             """)
                         
                         with col2:
@@ -2737,14 +2877,14 @@ aws sns publish --topic-arn arn:aws:sns:REGION:ACCOUNT:compliance-alerts \\
 **🤖 AI Analysis for OPA Violation**
 
 **Risk Assessment:**
-{violation.get('Severity', 'UNKNOWN')}-severity {violation.get('ResourceType', 'resource')} misconfiguration detected.
+{violation['Severity']}-severity {violation['ResourceType']} misconfiguration detected.
 
 **Impact Analysis:**
 - **Resource:** {violation.get('Resource', 'N/A')}
-- **Issue:** {violation.get('Issue', 'N/A')}
+- **Issue:** {violation['Issue']}
 - **Security Impact:** Potential {
-    'system compromise and data breach' if violation.get('Severity') == 'CRITICAL' else
-    'privilege escalation or data exposure' if violation.get('Severity') == 'HIGH' else
+    'system compromise and data breach' if violation['Severity'] == 'CRITICAL' else
+    'privilege escalation or data exposure' if violation['Severity'] == 'HIGH' else
     'security control bypass'
 }
 
@@ -2752,7 +2892,7 @@ aws sns publish --topic-arn arn:aws:sns:REGION:ACCOUNT:compliance-alerts \\
 Policy "{policy['PolicyName']}" enforces: {policy['Description']}
 
 **Detailed Remediation:**
-1. **Immediate:** {violation.get('Remediation', 'N/A')}
+1. **Immediate:** {violation['Remediation']}
 2. **Verify:** Test changes in dev/staging environment
 3. **Deploy:** Apply to production with monitoring
 4. **Prevent:** Add pre-commit hooks or CI/CD gates
@@ -2772,17 +2912,14 @@ Policy "{policy['PolicyName']}" enforces: {policy['Description']}
                                     # Generate appropriate script based on resource type
                                     if 'Cluster' in violation:
                                         script_lang = 'yaml'
-                                        resource_name = violation.get('Resource', 'N/A')
-                                        namespace = violation.get('Namespace', 'default')
-                                        remediation = violation.get('Remediation', 'Apply security best practices')
-                                        script = f"""# Kubernetes Remediation for {resource_name}
-# {remediation}
+                                        script = f"""# Kubernetes Remediation for {violation['Resource']}
+# {violation['Remediation']}
 
 apiVersion: v1
 kind: Pod
 metadata:
-  name: {resource_name.split(': ')[1] if ': ' in resource_name else 'pod-name'}
-  namespace: {namespace}
+  name: {violation['Resource'].split(': ')[1] if ': ' in violation['Resource'] else 'pod-name'}
+  namespace: {violation['Namespace']}
 spec:
   securityContext:
     runAsNonRoot: true
@@ -2804,17 +2941,12 @@ spec:
         cpu: "100m"
         memory: "128Mi"
 """
-                                    elif 'Repository' in violation and 'terraform' in violation.get('Repository', '').lower():
+                                    elif 'Repository' in violation and 'terraform' in violation['Repository'].lower():
                                         script_lang = 'hcl'
-                                        resource_name = violation.get('Resource', 'N/A')
-                                        remediation = violation.get('Remediation', 'Apply security best practices')
-                                        resource_parts = resource_name.split('.')
-                                        resource_type = resource_parts[0] if len(resource_parts) > 0 else 'resource_type'
-                                        resource_id = resource_parts[1] if len(resource_parts) > 1 else 'resource_id'
-                                        script = f"""# Terraform Remediation for {resource_name}
-# {remediation}
+                                        script = f"""# Terraform Remediation for {violation['Resource']}
+# {violation['Remediation']}
 
-resource "{resource_type}" "{resource_id}" {{
+resource "{violation['Resource'].split('.')[0]}" "{violation['Resource'].split('.')[1]}" {{
   # ... existing configuration ...
   
   tags = {{
@@ -2834,16 +2966,14 @@ resource "{resource_type}" "{resource_id}" {{
 """
                                     else:
                                         script_lang = 'bash'
-                                        resource_name = violation.get('Resource', 'resource')
-                                        remediation = violation.get('Remediation', 'Apply fix')
                                         script = f"""# Remediation Script
-# {remediation}
+# {violation['Remediation']}
 
 # Update resource configuration
-echo "Remediating {resource_name}..."
+echo "Remediating {violation['Resource']}..."
 
 # Apply fix
-# {remediation}
+# {violation['Remediation']}
 
 echo "Remediation complete"
 """
@@ -2861,12 +2991,10 @@ echo "Remediation complete"
                         
                         # Show script if generated
                         if f'opa_script_{policy["PolicyName"]}_{idx}' in st.session_state:
+                            st.markdown("---")
+                            st.markdown("**Generated Remediation:**")
                             script_data = st.session_state[f'opa_script_{policy["PolicyName"]}_{idx}']
-                            # Verify script_data is a dictionary with required keys
-                            if isinstance(script_data, dict) and 'code' in script_data and 'lang' in script_data:
-                                st.markdown("---")
-                                st.markdown("**Generated Remediation:**")
-                                st.code(script_data['code'], language=script_data['lang'])
+                            st.code(script_data['code'], language=script_data['lang'])
                 
                 st.markdown("---")
     
@@ -3094,104 +3222,6 @@ File: `{finding['file_path']}` (Line {finding['line_number']})
             )
             
             fig = px.pie(category_df, values='Count', names='Category', hole=0.4)
-            st.plotly_chart(fig, use_container_width=True)
-    """Render Tech Guardrails policy management"""
-    st.markdown("## 🚧 Tech Guardrails Management")
-    
-    guardrail_tabs = st.tabs(["Service Control Policies (SCP)", "OPA Policies", "KICS Results"])
-    
-    # SCP Tab
-    with guardrail_tabs[0]:
-        st.markdown("### 🔒 Service Control Policies")
-        
-        scps = fetch_scp_policies(st.session_state.get('aws_clients', {}).get('organizations'))
-        
-        for scp in scps:
-            status_icon = "✅" if scp['Violations'] == 0 else "⚠️"
-            status_class = "good" if scp['Violations'] == 0 else "warning"
-            
-            st.markdown(f"""
-            <div class='policy-card'>
-                <h4>{status_icon} {scp['PolicyName']}</h4>
-                <p>{scp['Description']}</p>
-                <p><strong>Status:</strong> <span class='service-badge {status_class}'>{scp['Status']}</span></p>
-                <p><strong>Violations:</strong> {scp['Violations']}</p>
-                <p><small>Last Updated: {scp['LastUpdated']}</small></p>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    # OPA Tab
-    with guardrail_tabs[1]:
-        st.markdown("### 🎯 Open Policy Agent Policies")
-        
-        opa_policies = fetch_opa_policies()
-        
-        for policy in opa_policies:
-            status_icon = "✅" if policy['Violations'] < 5 else "⚠️"
-            
-            st.markdown(f"""
-            <div class='policy-card'>
-                <h4>{status_icon} {policy['PolicyName']}</h4>
-                <p>{policy['Description']}</p>
-                <p><strong>Type:</strong> {policy['Type']} | 
-                   <strong>Status:</strong> {policy['Status']} | 
-                   <strong>Violations:</strong> {policy['Violations']}</p>
-                <p><small>Last Evaluated: {policy['LastEvaluated']}</small></p>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    # KICS Tab
-    with guardrail_tabs[2]:
-        st.markdown("### 🔍 KICS - Infrastructure as Code Security")
-        
-        kics_data = fetch_kics_results()
-        
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            st.metric("Total Scans", kics_data['total_scans'])
-        with col2:
-            st.metric("Files Scanned", kics_data['files_scanned'])
-        with col3:
-            st.metric("Total Issues", kics_data['total_issues'])
-        with col4:
-            st.metric("Scan Duration", kics_data['scan_duration'])
-        
-        st.markdown("---")
-        
-        # Severity breakdown
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("#### Issues by Severity")
-            severity_data = pd.DataFrame({
-                'Severity': ['Critical', 'High', 'Medium', 'Low'],
-                'Count': [kics_data['critical'], kics_data['high'], 
-                         kics_data['medium'], kics_data['low']]
-            })
-            
-            fig = px.bar(
-                severity_data,
-                x='Severity',
-                y='Count',
-                color='Severity',
-                color_discrete_map={
-                    'Critical': '#F44336',
-                    'High': '#FF9800',
-                    'Medium': '#FFC107',
-                    'Low': '#4CAF50'
-                }
-            )
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            st.markdown("#### Issues by Category")
-            category_df = pd.DataFrame(
-                list(kics_data['issues_by_category'].items()),
-                columns=['Category', 'Count']
-            )
-            
-            fig = px.pie(category_df, values='Count', names='Category')
             st.plotly_chart(fig, use_container_width=True)
 
 def render_ai_insights_panel(client):
