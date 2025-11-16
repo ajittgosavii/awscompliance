@@ -1,894 +1,963 @@
-import streamlit as st
-import pandas as pd
-import time
-import random
-from datetime import datetime, timedelta
+"""
+AI-Enhanced AWS Compliance Platform
+Multi-Account Security Monitoring with Claude AI
 
-# Page configuration
+This Streamlit application provides real-time compliance monitoring,
+security analysis, and AI-powered remediation recommendations for AWS accounts.
+"""
+
+import streamlit as st
+import boto3
+from botocore.exceptions import ClientError, NoCredentialsError
+import anthropic
+import json
+import pandas as pd
+from datetime import datetime, timedelta
+import plotly.express as px
+import plotly.graph_objects as go
+from typing import Dict, List, Any, Optional
+import time
+
+# ============================================================================
+# PAGE CONFIGURATION
+# ============================================================================
+
 st.set_page_config(
-    page_title="Multi-Account Compliance Platform",
+    page_title="AI-Enhanced AWS Compliance Platform",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# ============================================================================
+# CUSTOM CSS STYLING
+# ============================================================================
+
 st.markdown("""
 <style>
     .main-header {
-        background: linear-gradient(to right, #2563eb, #9333ea, #2563eb);
-        color: white;
-        padding: 2rem;
-        border-radius: 10px;
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #1f77b4;
+        text-align: center;
+        padding: 1rem 0;
+    }
+    .sub-header {
+        font-size: 1.2rem;
+        color: #666;
+        text-align: center;
         margin-bottom: 2rem;
     }
     .metric-card {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 1.5rem;
+        border-radius: 10px;
+        color: white;
         margin: 0.5rem 0;
     }
-    .status-badge {
-        padding: 0.25rem 0.75rem;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 600;
+    .critical-finding {
+        background-color: #ff4444;
+        padding: 1rem;
+        border-radius: 5px;
+        margin: 0.5rem 0;
+        color: white;
     }
-    .critical { background: #fee2e2; color: #991b1b; }
-    .high { background: #fed7aa; color: #9a3412; }
-    .medium { background: #fef3c7; color: #92400e; }
-    .low { background: #dbeafe; color: #1e40af; }
-    .active { background: #d1fae5; color: #065f46; }
-    .stProgress > div > div > div > div {
-        background-color: #3b82f6;
+    .high-finding {
+        background-color: #ff8800;
+        padding: 1rem;
+        border-radius: 5px;
+        margin: 0.5rem 0;
+        color: white;
+    }
+    .medium-finding {
+        background-color: #ffbb33;
+        padding: 1rem;
+        border-radius: 5px;
+        margin: 0.5rem 0;
+    }
+    .low-finding {
+        background-color: #00C851;
+        padding: 1rem;
+        border-radius: 5px;
+        margin: 0.5rem 0;
+        color: white;
+    }
+    .ai-analysis {
+        background-color: #f0f8ff;
+        border-left: 5px solid #1f77b4;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 5px;
+    }
+    .stButton>button {
+        width: 100%;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize session state
-if 'active_view' not in st.session_state:
-    st.session_state.active_view = 'dashboard'
-if 'simulation_running' not in st.session_state:
-    st.session_state.simulation_running = False
-if 'e2e_running' not in st.session_state:
-    st.session_state.e2e_running = False
-if 'e2e_stage' not in st.session_state:
-    st.session_state.e2e_stage = 0
-if 'findings' not in st.session_state:
-    st.session_state.findings = []
-if 'remediation_logs' not in st.session_state:
-    st.session_state.remediation_logs = []
+# ============================================================================
+# CONFIGURATION AND SESSION STATE
+# ============================================================================
 
-# Architecture layers data
-ARCHITECTURE_LAYERS = {
-    'aggregation': {
-        'name': 'Aggregation Layer',
-        'color': '#3b82f6',
-        'description': 'Centralized security data collection from all 950 member accounts',
-        'services': [
-            {'name': 'Central Security Hub', 'status': 'Active', 'findings': 247, 'enabled': 950},
-            {'name': 'AWS Config Aggregator', 'status': 'Active', 'findings': 0, 'rules': 145},
-            {'name': 'CloudTrail Organization Trail', 'status': 'Active', 'events': 1234567},
-            {'name': 'GuardDuty Master Account', 'status': 'Active', 'findings': 34, 'threats': 34},
-            {'name': 'EventBridge', 'status': 'Active', 'eventsProcessed': 456789},
-            {'name': 'SNS Topics', 'status': 'Active', 'topics': 12}
-        ]
-    },
-    'intelligence': {
-        'name': 'Intelligence Layer',
-        'color': '#eab308',
-        'description': 'AI-powered analysis and recommendations using AWS Bedrock',
-        'services': [
-            {'name': 'AWS Bedrock (Claude AI)', 'status': 'Active', 'analysisCompleted': 3456},
-            {'name': 'Knowledge Bases', 'status': 'Active', 'documents': 1234},
-            {'name': 'CVE & Vulnerability Analysis', 'status': 'Active', 'cvesAssessed': 1234},
-            {'name': 'AI Recommendations Engine', 'status': 'Active', 'generated': 892},
-            {'name': 'Contextual Processing', 'status': 'Active', 'contexts': 23}
-        ]
-    },
-    'visualization': {
-        'name': 'Visualization Layer',
-        'color': '#22c55e',
-        'description': 'Executive dashboards and compliance reporting',
-        'services': [
-            {'name': 'Amazon QuickSight', 'status': 'Active', 'dashboards': 34, 'users': 156},
-            {'name': 'Compliance Dashboards', 'status': 'Active', 'frameworks': 4, 'compliance': '92.4%'},
-            {'name': 'Athena Query Engine', 'status': 'Active', 'queries': 2345},
-            {'name': 'S3 Data Lake', 'status': 'Active', 'size': '234TB'},
-            {'name': 'Automated Reports', 'status': 'Active', 'scheduled': 23},
-            {'name': 'Alert Management', 'status': 'Active', 'rules': 67}
-        ]
-    },
-    'orchestration': {
-        'name': 'Orchestration Layer',
-        'color': '#a855f7',
-        'description': 'Automated remediation and workflow orchestration',
-        'services': [
-            {'name': 'Step Functions', 'status': 'Active', 'workflows': 45},
-            {'name': 'Lambda Functions', 'status': 'Active', 'functions': 123},
-            {'name': 'SSM Automation', 'status': 'Active', 'runbooks': 78},
-            {'name': 'Approval Workflows', 'status': 'Active', 'pending': 12},
-            {'name': 'Change Management', 'status': 'Active', 'changes': 234}
-        ]
-    }
-}
+def initialize_session_state():
+    """Initialize Streamlit session state variables"""
+    if 'aws_client_initialized' not in st.session_state:
+        st.session_state.aws_client_initialized = False
+    if 'claude_client_initialized' not in st.session_state:
+        st.session_state.claude_client_initialized = False
+    if 'security_findings' not in st.session_state:
+        st.session_state.security_findings = []
+    if 'config_compliance' not in st.session_state:
+        st.session_state.config_compliance = {}
+    if 'guardduty_findings' not in st.session_state:
+        st.session_state.guardduty_findings = []
+    if 'ai_analysis_cache' not in st.session_state:
+        st.session_state.ai_analysis_cache = {}
 
-# Sample findings data
-SAMPLE_FINDINGS = [
-    {
-        'id': 'F001',
-        'title': 'S3 Bucket Publicly Accessible',
-        'severity': 'Critical',
-        'account': 'prod-account-123',
-        'resource': 's3://data-bucket-prod',
-        'framework': 'PCI DSS 3.2.1',
-        'control': '1.2.1',
-        'description': 'S3 bucket allows public read access',
-        'recommendation': 'Remove public access and enable bucket encryption',
-        'status': 'Open'
-    },
-    {
-        'id': 'F002',
-        'title': 'IAM User Without MFA',
-        'severity': 'High',
-        'account': 'dev-account-456',
-        'resource': 'iam-user/john.doe',
-        'framework': 'SOC 2',
-        'control': 'CC6.1',
-        'description': 'IAM user has console access without MFA enabled',
-        'recommendation': 'Enable MFA for all users with console access',
-        'status': 'In Progress'
-    },
-    {
-        'id': 'F003',
-        'title': 'Unencrypted EBS Volume',
-        'severity': 'High',
-        'account': 'prod-account-789',
-        'resource': 'vol-0abc123def456',
-        'framework': 'HIPAA',
-        'control': '164.312(a)(2)(iv)',
-        'description': 'EBS volume is not encrypted at rest',
-        'recommendation': 'Create encrypted snapshot and replace volume',
-        'status': 'Open'
-    },
-    {
-        'id': 'F004',
-        'title': 'Security Group Allows 0.0.0.0/0',
-        'severity': 'Medium',
-        'account': 'staging-account-321',
-        'resource': 'sg-0123456789abcdef',
-        'framework': 'GDPR',
-        'control': 'Article 32',
-        'description': 'Security group allows unrestricted inbound access',
-        'recommendation': 'Restrict access to specific IP ranges',
-        'status': 'Open'
-    },
-    {
-        'id': 'F005',
-        'title': 'RDS Instance Not in VPC',
-        'severity': 'Critical',
-        'account': 'prod-account-123',
-        'resource': 'rds-instance-legacy',
-        'framework': 'PCI DSS 3.2.1',
-        'control': '1.3.4',
-        'description': 'RDS instance is not deployed in a VPC',
-        'recommendation': 'Migrate RDS instance to VPC',
-        'status': 'Open'
-    },
-    {
-        'id': 'F006',
-        'title': 'CloudTrail Logging Disabled',
-        'severity': 'High',
-        'account': 'test-account-654',
-        'resource': 'us-west-2',
-        'framework': 'SOC 2',
-        'control': 'CC7.2',
-        'description': 'CloudTrail logging is not enabled in this region',
-        'recommendation': 'Enable CloudTrail logging for all regions',
-        'status': 'Open'
-    },
-    {
-        'id': 'F007',
-        'title': 'Lambda Function Without Dead Letter Queue',
-        'severity': 'Medium',
-        'account': 'dev-account-456',
-        'resource': 'lambda-function-processor',
-        'framework': 'Best Practice',
-        'control': 'N/A',
-        'description': 'Lambda function does not have a dead letter queue configured',
-        'recommendation': 'Configure DLQ for failed invocations',
-        'status': 'Open'
-    },
-    {
-        'id': 'F008',
-        'title': 'EC2 Instance Missing Security Patches',
-        'severity': 'High',
-        'account': 'prod-account-789',
-        'resource': 'i-0987654321fedcba',
-        'framework': 'HIPAA',
-        'control': '164.308(a)(5)(ii)(B)',
-        'description': '23 critical security patches missing on EC2 instance',
-        'recommendation': 'Apply security patches using SSM Patch Manager',
-        'status': 'In Progress'
-    }
-]
+# ============================================================================
+# AWS CLIENT INITIALIZATION
+# ============================================================================
 
-# Compliance metrics
-COMPLIANCE_METRICS = {
-    'PCI DSS': {'score': 94, 'controls_passed': 235, 'controls_total': 250},
-    'HIPAA': {'score': 91, 'controls_passed': 182, 'controls_total': 200},
-    'GDPR': {'score': 96, 'controls_passed': 144, 'controls_total': 150},
-    'SOC 2': {'score': 93, 'controls_passed': 186, 'controls_total': 200}
-}
+@st.cache_resource
+def get_aws_clients(aws_access_key: str, aws_secret_key: str, region: str):
+    """Initialize AWS service clients"""
+    try:
+        session = boto3.Session(
+            aws_access_key_id=aws_access_key,
+            aws_secret_access_key=aws_secret_key,
+            region_name=region
+        )
+        
+        clients = {
+            'securityhub': session.client('securityhub'),
+            'config': session.client('config'),
+            'guardduty': session.client('guardduty'),
+            'organizations': session.client('organizations'),
+            'sts': session.client('sts')
+        }
+        
+        return clients
+    except Exception as e:
+        st.error(f"Failed to initialize AWS clients: {str(e)}")
+        return None
 
-def render_header():
-    """Render the main header"""
-    st.markdown("""
-    <div class="main-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h1 style="margin: 0; font-size: 2rem;">🛡️ Multi-Account Compliance Platform</h1>
-                <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
-                    Centralized Intelligence, Visualization & Automated Remediation across 950 AWS Accounts
-                </p>
-            </div>
-            <div style="text-align: right; background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px;">
-                <p style="margin: 0; font-size: 0.875rem; opacity: 0.9;">Central Management Account</p>
-                <p style="margin: 0; font-size: 2rem; font-weight: bold;">950 Accounts</p>
-                <p style="margin: 0; font-size: 0.75rem; opacity: 0.8;">Real-time monitoring</p>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+# ============================================================================
+# CLAUDE API CLIENT
+# ============================================================================
 
-def render_dashboard():
-    """Render the main dashboard view"""
-    st.markdown("## 📊 Compliance Dashboard")
-    
-    # Compliance Framework Metrics
-    st.markdown("### Compliance Framework Status")
-    cols = st.columns(4)
-    for idx, (framework, data) in enumerate(COMPLIANCE_METRICS.items()):
-        with cols[idx]:
-            st.metric(
-                label=framework,
-                value=f"{data['score']}%",
-                delta=f"{data['controls_passed']}/{data['controls_total']} controls"
+@st.cache_resource
+def get_claude_client(api_key: str):
+    """Initialize Anthropic Claude client"""
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        return client
+    except Exception as e:
+        st.error(f"Failed to initialize Claude client: {str(e)}")
+        return None
+
+# ============================================================================
+# AWS DATA FETCHING FUNCTIONS
+# ============================================================================
+
+def get_security_hub_findings(securityhub_client, max_results: int = 100) -> List[Dict]:
+    """Fetch findings from AWS Security Hub"""
+    try:
+        findings = []
+        paginator = securityhub_client.get_paginator('get_findings')
+        
+        # Filter for active findings only
+        filters = {
+            'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}]
+        }
+        
+        page_iterator = paginator.paginate(
+            Filters=filters,
+            MaxResults=max_results
+        )
+        
+        for page in page_iterator:
+            findings.extend(page['Findings'])
+        
+        return findings
+    except ClientError as e:
+        st.error(f"Error fetching Security Hub findings: {str(e)}")
+        return []
+
+def get_config_compliance_summary(config_client) -> Dict:
+    """Get AWS Config compliance summary"""
+    try:
+        response = config_client.describe_compliance_by_config_rule()
+        
+        compliance_summary = {
+            'COMPLIANT': 0,
+            'NON_COMPLIANT': 0,
+            'NOT_APPLICABLE': 0,
+            'INSUFFICIENT_DATA': 0
+        }
+        
+        for rule in response.get('ComplianceByConfigRules', []):
+            compliance = rule.get('Compliance', {})
+            compliance_type = compliance.get('ComplianceType', 'INSUFFICIENT_DATA')
+            compliance_summary[compliance_type] = compliance_summary.get(compliance_type, 0) + 1
+        
+        return compliance_summary
+    except ClientError as e:
+        st.error(f"Error fetching Config compliance: {str(e)}")
+        return {}
+
+def get_guardduty_findings(guardduty_client) -> List[Dict]:
+    """Fetch findings from AWS GuardDuty"""
+    try:
+        # First, get list of detectors
+        detectors_response = guardduty_client.list_detectors()
+        detector_ids = detectors_response.get('DetectorIds', [])
+        
+        if not detector_ids:
+            return []
+        
+        all_findings = []
+        
+        for detector_id in detector_ids:
+            # Get finding IDs
+            findings_response = guardduty_client.list_findings(
+                DetectorId=detector_id,
+                FindingCriteria={
+                    'Criterion': {
+                        'service.archived': {
+                            'Eq': ['false']
+                        }
+                    }
+                },
+                MaxResults=50
             )
-            st.progress(data['score'] / 100)
-    
-    st.markdown("---")
-    
-    # Architecture Layers Overview
-    st.markdown("### 🏗️ Platform Architecture Layers")
-    
-    for layer_id, layer in ARCHITECTURE_LAYERS.items():
-        with st.expander(f"{layer['name']} - {len(layer['services'])} Services", expanded=False):
-            st.markdown(f"**Description:** {layer['description']}")
             
-            # Create a dataframe for services
-            services_data = []
-            for service in layer['services']:
-                # Get the first metric after name and status
-                metric_items = list(service.items())[2:]  # Skip 'name' and 'status'
-                if metric_items:
-                    key, value = metric_items[0]
-                    metric_str = f"{key}: {value}"
+            finding_ids = findings_response.get('FindingIds', [])
+            
+            if finding_ids:
+                # Get finding details
+                findings_detail = guardduty_client.get_findings(
+                    DetectorId=detector_id,
+                    FindingIds=finding_ids
+                )
+                all_findings.extend(findings_detail.get('Findings', []))
+        
+        return all_findings
+    except ClientError as e:
+        st.error(f"Error fetching GuardDuty findings: {str(e)}")
+        return []
+
+def get_account_info(sts_client) -> Dict:
+    """Get current AWS account information"""
+    try:
+        response = sts_client.get_caller_identity()
+        return {
+            'AccountId': response.get('Account'),
+            'Arn': response.get('Arn'),
+            'UserId': response.get('UserId')
+        }
+    except ClientError as e:
+        st.error(f"Error getting account info: {str(e)}")
+        return {}
+
+# ============================================================================
+# CLAUDE AI ANALYSIS FUNCTIONS
+# ============================================================================
+
+def analyze_finding_with_claude(claude_client, finding: Dict, finding_type: str = "SecurityHub") -> str:
+    """Use Claude AI to analyze a security finding and provide recommendations"""
+    
+    # Create a cache key for this finding
+    cache_key = f"{finding_type}_{finding.get('Id', '')}_{finding.get('GeneratorId', '')}"
+    
+    # Check if we have cached analysis
+    if cache_key in st.session_state.ai_analysis_cache:
+        return st.session_state.ai_analysis_cache[cache_key]
+    
+    try:
+        # Prepare the finding details for Claude
+        if finding_type == "SecurityHub":
+            finding_context = f"""
+Security Finding Analysis Request:
+
+Finding ID: {finding.get('Id', 'Unknown')}
+Title: {finding.get('Title', 'Unknown')}
+Severity: {finding.get('Severity', {}).get('Label', 'Unknown')}
+Compliance Status: {finding.get('Compliance', {}).get('Status', 'Unknown')}
+Description: {finding.get('Description', 'No description available')}
+
+Resources Affected:
+{json.dumps(finding.get('Resources', []), indent=2)}
+
+Recommendation from AWS:
+{finding.get('Remediation', {}).get('Recommendation', {}).get('Text', 'No recommendation provided')}
+
+Compliance Frameworks:
+{json.dumps(finding.get('Compliance', {}), indent=2)}
+"""
+        else:  # GuardDuty
+            finding_context = f"""
+Security Threat Analysis Request:
+
+Finding ID: {finding.get('Id', 'Unknown')}
+Type: {finding.get('Type', 'Unknown')}
+Severity: {finding.get('Severity', 'Unknown')}
+Title: {finding.get('Title', 'Unknown')}
+Description: {finding.get('Description', 'No description available')}
+
+Resource: {json.dumps(finding.get('Resource', {}), indent=2)}
+Service: {json.dumps(finding.get('Service', {}), indent=2)}
+"""
+
+        prompt = f"""{finding_context}
+
+As a senior security engineer analyzing this AWS security finding, please provide:
+
+1. **Risk Assessment**: Evaluate the true severity and potential business impact
+2. **Root Cause Analysis**: Identify the underlying cause of this security issue
+3. **Attack Vectors**: Describe potential attack scenarios if this issue is exploited
+4. **Compliance Impact**: Identify which compliance frameworks (PCI DSS, HIPAA, GDPR, SOC 2) are affected
+5. **Remediation Plan**: Provide step-by-step remediation with specific AWS CLI commands or CloudFormation templates
+6. **Prevention Strategy**: Suggest preventive controls to avoid similar issues in the future
+
+Please be concise but thorough in your analysis."""
+
+        message = claude_client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=2000,
+            temperature=0.3,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        analysis = message.content[0].text
+        
+        # Cache the analysis
+        st.session_state.ai_analysis_cache[cache_key] = analysis
+        
+        return analysis
+        
+    except Exception as e:
+        error_msg = f"Error during Claude AI analysis: {str(e)}"
+        st.error(error_msg)
+        return error_msg
+
+def get_compliance_insights(claude_client, compliance_data: Dict, findings_summary: Dict) -> str:
+    """Get AI-powered compliance insights and recommendations"""
+    try:
+        prompt = f"""
+As a compliance and security expert, analyze the following AWS compliance data:
+
+Config Rules Compliance Summary:
+- Compliant Rules: {compliance_data.get('COMPLIANT', 0)}
+- Non-Compliant Rules: {compliance_data.get('NON_COMPLIANT', 0)}
+- Not Applicable: {compliance_data.get('NOT_APPLICABLE', 0)}
+- Insufficient Data: {compliance_data.get('INSUFFICIENT_DATA', 0)}
+
+Security Findings Summary:
+{json.dumps(findings_summary, indent=2)}
+
+Please provide:
+
+1. **Overall Compliance Posture**: Assessment of the current security and compliance state
+2. **Critical Gaps**: Identify the most critical compliance gaps that need immediate attention
+3. **Risk Prioritization**: Prioritize risks based on severity and compliance impact
+4. **Quick Wins**: Suggest quick remediation actions that can improve compliance score rapidly
+5. **Strategic Recommendations**: Long-term improvements for maintaining strong security posture
+6. **Compliance Framework Alignment**: How well does this align with PCI DSS, HIPAA, GDPR, and SOC 2 requirements?
+
+Be specific and actionable in your recommendations.
+"""
+
+        message = claude_client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=2500,
+            temperature=0.3,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        return message.content[0].text
+        
+    except Exception as e:
+        return f"Error generating compliance insights: {str(e)}"
+
+def generate_remediation_code(claude_client, finding: Dict) -> str:
+    """Generate executable remediation code using Claude"""
+    try:
+        prompt = f"""
+Generate Python boto3 code to automatically remediate this AWS security finding:
+
+Finding Title: {finding.get('Title', 'Unknown')}
+Description: {finding.get('Description', 'Unknown')}
+Resource: {json.dumps(finding.get('Resources', [{}])[0], indent=2)}
+Recommendation: {finding.get('Remediation', {}).get('Recommendation', {}).get('Text', 'Unknown')}
+
+Please provide:
+1. Complete, executable Python code using boto3
+2. Proper error handling
+3. Dry-run option for testing
+4. Rollback procedure
+5. Comments explaining each step
+
+The code should be production-ready and follow AWS best practices.
+"""
+
+        message = claude_client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=2000,
+            temperature=0.2,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        return message.content[0].text
+        
+    except Exception as e:
+        return f"Error generating remediation code: {str(e)}"
+
+# ============================================================================
+# DATA PROCESSING FUNCTIONS
+# ============================================================================
+
+def process_findings_for_display(findings: List[Dict]) -> pd.DataFrame:
+    """Convert Security Hub findings to DataFrame for display"""
+    if not findings:
+        return pd.DataFrame()
+    
+    processed = []
+    for finding in findings:
+        processed.append({
+            'ID': finding.get('Id', 'Unknown')[:50] + '...',
+            'Title': finding.get('Title', 'Unknown'),
+            'Severity': finding.get('Severity', {}).get('Label', 'Unknown'),
+            'Status': finding.get('Compliance', {}).get('Status', 'Unknown'),
+            'Resource': finding.get('Resources', [{}])[0].get('Type', 'Unknown'),
+            'Created': finding.get('CreatedAt', 'Unknown')[:10],
+            'Updated': finding.get('UpdatedAt', 'Unknown')[:10],
+        })
+    
+    return pd.DataFrame(processed)
+
+def get_severity_counts(findings: List[Dict]) -> Dict:
+    """Count findings by severity"""
+    counts = {'CRITICAL': 0, 'HIGH': 0, 'MEDIUM': 0, 'LOW': 0, 'INFORMATIONAL': 0}
+    for finding in findings:
+        severity = finding.get('Severity', {}).get('Label', 'INFORMATIONAL')
+        counts[severity] = counts.get(severity, 0) + 1
+    return counts
+
+def get_compliance_status_counts(findings: List[Dict]) -> Dict:
+    """Count findings by compliance status"""
+    counts = {}
+    for finding in findings:
+        status = finding.get('Compliance', {}).get('Status', 'UNKNOWN')
+        counts[status] = counts.get(status, 0) + 1
+    return counts
+
+# ============================================================================
+# VISUALIZATION FUNCTIONS
+# ============================================================================
+
+def create_severity_chart(severity_counts: Dict):
+    """Create a pie chart for severity distribution"""
+    df = pd.DataFrame(list(severity_counts.items()), columns=['Severity', 'Count'])
+    df = df[df['Count'] > 0]  # Only show non-zero counts
+    
+    colors = {
+        'CRITICAL': '#8B0000',
+        'HIGH': '#FF4444',
+        'MEDIUM': '#FFBB33',
+        'LOW': '#00C851',
+        'INFORMATIONAL': '#33B5E5'
+    }
+    
+    color_sequence = [colors.get(severity, '#CCCCCC') for severity in df['Severity']]
+    
+    fig = px.pie(df, values='Count', names='Severity', 
+                 title='Security Findings by Severity',
+                 color_discrete_sequence=color_sequence)
+    fig.update_traces(textposition='inside', textinfo='percent+label+value')
+    return fig
+
+def create_compliance_chart(compliance_data: Dict):
+    """Create a bar chart for compliance status"""
+    df = pd.DataFrame(list(compliance_data.items()), columns=['Status', 'Count'])
+    
+    colors = {
+        'COMPLIANT': '#00C851',
+        'NON_COMPLIANT': '#FF4444',
+        'NOT_APPLICABLE': '#CCCCCC',
+        'INSUFFICIENT_DATA': '#FFBB33'
+    }
+    
+    fig = px.bar(df, x='Status', y='Count', 
+                 title='AWS Config Rules Compliance Status',
+                 color='Status',
+                 color_discrete_map=colors)
+    fig.update_layout(showlegend=False)
+    return fig
+
+def create_timeline_chart(findings: List[Dict]):
+    """Create timeline of findings"""
+    if not findings:
+        return None
+    
+    dates = []
+    for finding in findings:
+        created = finding.get('CreatedAt', '')
+        if created:
+            dates.append(created[:10])
+    
+    if not dates:
+        return None
+    
+    df = pd.DataFrame({'Date': dates})
+    df['Count'] = 1
+    df = df.groupby('Date').count().reset_index()
+    df = df.sort_values('Date')
+    
+    fig = px.line(df, x='Date', y='Count', 
+                  title='Security Findings Over Time',
+                  markers=True)
+    return fig
+
+# ============================================================================
+# SIDEBAR - CONFIGURATION
+# ============================================================================
+
+def render_sidebar():
+    """Render the configuration sidebar"""
+    with st.sidebar:
+        st.markdown("## ⚙️ Configuration")
+        
+        st.markdown("### 🔑 Anthropic Claude API")
+        claude_api_key = st.text_input(
+            "Claude API Key",
+            type="password",
+            help="Enter your Anthropic API key",
+            key="claude_api_key"
+        )
+        
+        st.markdown("### ☁️ AWS Credentials")
+        aws_access_key = st.text_input(
+            "AWS Access Key ID",
+            type="password",
+            help="Enter your AWS Access Key ID",
+            key="aws_access_key"
+        )
+        
+        aws_secret_key = st.text_input(
+            "AWS Secret Access Key",
+            type="password",
+            help="Enter your AWS Secret Access Key",
+            key="aws_secret_key"
+        )
+        
+        aws_region = st.selectbox(
+            "AWS Region",
+            ["us-east-1", "us-east-2", "us-west-1", "us-west-2", 
+             "eu-west-1", "eu-central-1", "ap-southeast-1", "ap-northeast-1"],
+            help="Select your AWS region",
+            key="aws_region"
+        )
+        
+        st.markdown("---")
+        
+        if st.button("🚀 Initialize Clients", use_container_width=True):
+            with st.spinner("Initializing AWS and Claude clients..."):
+                # Initialize Claude client
+                if claude_api_key:
+                    claude_client = get_claude_client(claude_api_key)
+                    if claude_client:
+                        st.session_state.claude_client = claude_client
+                        st.session_state.claude_client_initialized = True
+                        st.success("✅ Claude client initialized!")
                 else:
-                    metric_str = "N/A"
+                    st.error("❌ Please provide Claude API key")
                 
-                services_data.append({
-                    'Service': service['name'],
-                    'Status': service['status'],
-                    'Key Metric': metric_str
-                })
-            
-            df = pd.DataFrame(services_data)
-            st.dataframe(df, use_container_width=True, hide_index=True)
-    
-    st.markdown("---")
-    
-    # Key Platform Metrics
-    st.markdown("### 📈 Platform Performance Metrics")
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.markdown("""
-        <div class="metric-card">
-            <h4 style="margin-top: 0;">Total Findings</h4>
-            <h2 style="color: #ef4444; margin: 0.5rem 0;">247</h2>
-            <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">18 Critical, 67 High</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class="metric-card">
-            <h4 style="margin-top: 0;">Accounts Monitored</h4>
-            <h2 style="color: #3b82f6; margin: 0.5rem 0;">950</h2>
-            <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">100% Coverage</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div class="metric-card">
-            <h4 style="margin-top: 0;">Auto-Remediated</h4>
-            <h2 style="color: #22c55e; margin: 0.5rem 0;">567</h2>
-            <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">This month</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col4:
-        st.markdown("""
-        <div class="metric-card">
-            <h4 style="margin-top: 0;">AI Recommendations</h4>
-            <h2 style="color: #eab308; margin: 0.5rem 0;">892</h2>
-            <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">94% Accuracy</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
-    # Recent Activity
-    st.markdown("### 🔔 Recent Activity")
-    activity_data = [
-        {'Time': '2 mins ago', 'Event': 'Critical finding remediated in prod-account-123', 'Type': '✅ Remediation'},
-        {'Time': '15 mins ago', 'Event': 'New security finding detected: S3 bucket exposure', 'Type': '⚠️ Alert'},
-        {'Time': '1 hour ago', 'Event': 'Compliance scan completed across 950 accounts', 'Type': '🔍 Scan'},
-        {'Time': '2 hours ago', 'Event': 'AI recommendation accepted and deployed', 'Type': '🤖 AI Action'},
-        {'Time': '3 hours ago', 'Event': 'Monthly compliance report generated', 'Type': '📄 Report'}
-    ]
-    
-    df_activity = pd.DataFrame(activity_data)
-    st.dataframe(df_activity, use_container_width=True, hide_index=True)
-
-def render_e2e_workflow():
-    """Render the End-to-End Workflow view"""
-    st.markdown("## 🔄 End-to-End Workflow Simulation")
-    
-    st.markdown("""
-    This simulation demonstrates the complete automated workflow from security finding detection 
-    to AI-powered analysis and automated remediation across the 950-account infrastructure.
-    """)
-    
-    st.markdown("---")
-    
-    # Workflow stages
-    stages = [
-        {"name": "1. Detection", "description": "Security Hub aggregates finding from GuardDuty"},
-        {"name": "2. EventBridge Trigger", "description": "Event detected and routed to processing"},
-        {"name": "3. AI Analysis", "description": "Bedrock Claude analyzes severity and context"},
-        {"name": "4. Recommendation", "description": "AI generates remediation recommendation"},
-        {"name": "5. Approval Check", "description": "Determine if auto-remediation is approved"},
-        {"name": "6. Orchestration", "description": "Step Functions triggers remediation workflow"},
-        {"name": "7. Remediation", "description": "Lambda executes fix across accounts"},
-        {"name": "8. Verification", "description": "Config verifies compliance restored"},
-        {"name": "9. Notification", "description": "SNS notifies stakeholders of completion"},
-        {"name": "10. Documentation", "description": "Audit trail stored in S3 Data Lake"}
-    ]
-    
-    # Control buttons
-    col1, col2, col3 = st.columns([1, 1, 4])
-    
-    with col1:
-        if st.button("▶️ Start Simulation", disabled=st.session_state.e2e_running, use_container_width=True):
-            st.session_state.e2e_running = True
-            st.session_state.e2e_stage = 0
-            st.rerun()
-    
-    with col2:
-        if st.button("⏹️ Reset", use_container_width=True):
-            st.session_state.e2e_running = False
-            st.session_state.e2e_stage = 0
-            st.rerun()
-    
-    st.markdown("---")
-    
-    # Display workflow stages
-    if st.session_state.e2e_running and st.session_state.e2e_stage < len(stages):
-        # Progress bar
-        progress = (st.session_state.e2e_stage + 1) / len(stages)
-        st.progress(progress, text=f"Progress: {int(progress * 100)}% - Stage {st.session_state.e2e_stage + 1} of {len(stages)}")
+                # Initialize AWS clients
+                if aws_access_key and aws_secret_key:
+                    aws_clients = get_aws_clients(aws_access_key, aws_secret_key, aws_region)
+                    if aws_clients:
+                        st.session_state.aws_clients = aws_clients
+                        st.session_state.aws_client_initialized = True
+                        st.success("✅ AWS clients initialized!")
+                        
+                        # Get account info
+                        account_info = get_account_info(aws_clients['sts'])
+                        st.session_state.account_info = account_info
+                else:
+                    st.error("❌ Please provide AWS credentials")
         
-        # Current stage
-        current_stage = stages[st.session_state.e2e_stage]
-        st.markdown(f"""
-        <div style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 1rem; margin: 1rem 0;">
-            <h3 style="margin-top: 0; color: #1e40af;">⚡ {current_stage['name']}</h3>
-            <p style="margin: 0;">{current_stage['description']}</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("---")
         
-        # Manual advance button
-        if st.button("▶️ Next Stage", key="next_stage"):
-            st.session_state.e2e_stage += 1
-            st.rerun()
-    
-    elif st.session_state.e2e_stage >= len(stages):
-        st.success("✅ **Workflow Completed Successfully!**")
-        st.balloons()
-        st.session_state.e2e_running = False
-    
-    # Display all stages
-    st.markdown("### Workflow Stages")
-    for idx, stage in enumerate(stages):
-        if idx < st.session_state.e2e_stage:
-            icon = "✅"
-            style = "background: #d1fae5; border-left: 4px solid #10b981;"
-        elif idx == st.session_state.e2e_stage:
-            icon = "⏳"
-            style = "background: #fef3c7; border-left: 4px solid #eab308;"
+        # Display connection status
+        st.markdown("### 📊 Connection Status")
+        
+        if st.session_state.get('claude_client_initialized', False):
+            st.success("🟢 Claude API Connected")
         else:
-            icon = "⏺️"
-            style = "background: #f3f4f6; border-left: 4px solid #9ca3af;"
+            st.error("🔴 Claude API Not Connected")
         
-        st.markdown(f"""
-        <div style="{style} padding: 0.75rem; margin: 0.5rem 0;">
-            <strong>{icon} {stage['name']}</strong>: {stage['description']}
-        </div>
-        """, unsafe_allow_html=True)
+        if st.session_state.get('aws_client_initialized', False):
+            st.success("🟢 AWS Connected")
+            if 'account_info' in st.session_state:
+                st.info(f"Account: {st.session_state.account_info.get('AccountId', 'Unknown')}")
+        else:
+            st.error("🔴 AWS Not Connected")
+        
+        st.markdown("---")
+        
+        # Refresh data button
+        if st.session_state.get('aws_client_initialized', False):
+            if st.button("🔄 Refresh Data", use_container_width=True):
+                st.rerun()
+
+# ============================================================================
+# MAIN DASHBOARD
+# ============================================================================
+
+def render_overview_dashboard():
+    """Render the main overview dashboard"""
+    st.markdown('<div class="main-header">🛡️ AI-Enhanced AWS Compliance Platform</div>', 
+                unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">Multi-Account Security Monitoring with Claude AI</div>', 
+                unsafe_allow_html=True)
     
-    st.markdown("---")
+    if not st.session_state.get('aws_client_initialized', False):
+        st.warning("⚠️ Please configure AWS credentials in the sidebar to get started")
+        return
     
-    # Integration Architecture
-    st.markdown("### 🏗️ Integration Architecture")
+    # Fetch data from AWS
+    with st.spinner("🔍 Fetching security data from AWS..."):
+        aws_clients = st.session_state.aws_clients
+        
+        # Get Security Hub findings
+        security_findings = get_security_hub_findings(aws_clients['securityhub'])
+        st.session_state.security_findings = security_findings
+        
+        # Get Config compliance
+        config_compliance = get_config_compliance_summary(aws_clients['config'])
+        st.session_state.config_compliance = config_compliance
+        
+        # Get GuardDuty findings
+        guardduty_findings = get_guardduty_findings(aws_clients['guardduty'])
+        st.session_state.guardduty_findings = guardduty_findings
+    
+    # Display key metrics
+    st.markdown("## 📊 Security Posture Overview")
     
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.markdown("""
-        <div style="background: #1f2937; color: white; padding: 1rem; border-radius: 8px;">
-            <h4 style="margin-top: 0;">💻 External Services</h4>
-            <div style="background: #374151; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
-                <strong>GitHub Repository</strong><br/>
-                <span style="color: #d1d5db;">Policy as Code (IaC)</span>
-            </div>
-            <div style="background: #374151; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
-                <strong>CI/CD Pipeline</strong><br/>
-                <span style="color: #d1d5db;">GitHub Actions</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        total_findings = len(security_findings)
+        st.metric(
+            label="Total Security Findings",
+            value=total_findings,
+            delta=f"Active",
+            delta_color="inverse"
+        )
     
     with col2:
-        st.markdown("""
-        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 1rem; border-radius: 8px;">
-            <h4 style="margin-top: 0; color: #065f46;">☁️ Deployment</h4>
-            <div style="background: white; border: 1px solid #a7f3d0; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
-                <strong style="color: #065f46;">CloudFormation</strong><br/>
-                <span style="color: #047857;">StackSets</span>
-            </div>
-            <div style="background: white; border: 1px solid #a7f3d0; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
-                <strong style="color: #065f46;">950 Accounts</strong><br/>
-                <span style="color: #047857;">Multi-Region</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        severity_counts = get_severity_counts(security_findings)
+        critical_high = severity_counts.get('CRITICAL', 0) + severity_counts.get('HIGH', 0)
+        st.metric(
+            label="Critical + High Severity",
+            value=critical_high,
+            delta="Requires attention" if critical_high > 0 else "Good",
+            delta_color="inverse" if critical_high > 0 else "normal"
+        )
     
     with col3:
-        st.markdown("""
-        <div style="background: #fef3c7; border: 1px solid #fde68a; padding: 1rem; border-radius: 8px;">
-            <h4 style="margin-top: 0; color: #78350f;">🛡️ Detection & AI</h4>
-            <div style="background: white; border: 1px solid #fde68a; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
-                <strong style="color: #78350f;">Security Hub</strong><br/>
-                <span style="color: #92400e;">Config, GuardDuty</span>
-            </div>
-            <div style="background: white; border: 1px solid #fde68a; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
-                <strong style="color: #78350f;">AWS Bedrock</strong><br/>
-                <span style="color: #92400e;">Claude AI</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        compliant = config_compliance.get('COMPLIANT', 0)
+        non_compliant = config_compliance.get('NON_COMPLIANT', 0)
+        total_rules = compliant + non_compliant
+        compliance_rate = (compliant / total_rules * 100) if total_rules > 0 else 0
+        st.metric(
+            label="Compliance Rate",
+            value=f"{compliance_rate:.1f}%",
+            delta=f"{compliant}/{total_rules} rules"
+        )
     
     with col4:
-        st.markdown("""
-        <div style="background: #fae8ff; border: 1px solid #e9d5ff; padding: 1rem; border-radius: 8px;">
-            <h4 style="margin-top: 0; color: #581c87;">⚡ Remediation</h4>
-            <div style="background: white; border: 1px solid #e9d5ff; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
-                <strong style="color: #581c87;">Step Functions</strong><br/>
-                <span style="color: #6b21a8;">Orchestration</span>
-            </div>
-            <div style="background: white; border: 1px solid #e9d5ff; padding: 0.5rem; margin: 0.5rem 0; border-radius: 4px; font-size: 0.875rem;">
-                <strong style="color: #581c87;">Lambda</strong><br/>
-                <span style="color: #6b21a8;">Automated Fixes</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-def render_findings():
-    """Render the Security Findings view"""
-    st.markdown("## 🔍 Security Findings")
+        guardduty_count = len(guardduty_findings)
+        st.metric(
+            label="GuardDuty Threats",
+            value=guardduty_count,
+            delta="Active threats" if guardduty_count > 0 else "No threats",
+            delta_color="inverse" if guardduty_count > 0 else "normal"
+        )
     
-    # Filters
+    # Visualization row
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        severity_chart = create_severity_chart(severity_counts)
+        if severity_chart:
+            st.plotly_chart(severity_chart, use_container_width=True)
+    
+    with col2:
+        compliance_chart = create_compliance_chart(config_compliance)
+        if compliance_chart:
+            st.plotly_chart(compliance_chart, use_container_width=True)
+    
+    # Timeline
+    timeline = create_timeline_chart(security_findings)
+    if timeline:
+        st.plotly_chart(timeline, use_container_width=True)
+    
+    # AI-Powered Compliance Insights
+    if st.session_state.get('claude_client_initialized', False):
+        st.markdown("---")
+        st.markdown("## 🤖 AI-Powered Compliance Insights")
+        
+        if st.button("🧠 Generate Comprehensive Compliance Analysis", use_container_width=True):
+            with st.spinner("🤖 Claude AI is analyzing your compliance posture..."):
+                findings_summary = {
+                    'total_findings': len(security_findings),
+                    'severity_distribution': severity_counts,
+                    'compliance_status': get_compliance_status_counts(security_findings),
+                    'guardduty_threats': len(guardduty_findings)
+                }
+                
+                insights = get_compliance_insights(
+                    st.session_state.claude_client,
+                    config_compliance,
+                    findings_summary
+                )
+                
+                st.markdown('<div class="ai-analysis">', unsafe_allow_html=True)
+                st.markdown("### 📋 Claude's Analysis")
+                st.markdown(insights)
+                st.markdown('</div>', unsafe_allow_html=True)
+
+def render_findings_detail():
+    """Render detailed findings view with AI analysis"""
+    st.markdown("## 🔍 Security Findings Details")
+    
+    if not st.session_state.get('aws_client_initialized', False):
+        st.warning("⚠️ Please configure AWS credentials in the sidebar")
+        return
+    
+    security_findings = st.session_state.get('security_findings', [])
+    
+    if not security_findings:
+        st.info("ℹ️ No security findings to display")
+        return
+    
+    # Filter options
     col1, col2, col3 = st.columns(3)
     
     with col1:
         severity_filter = st.multiselect(
             "Filter by Severity",
-            options=['Critical', 'High', 'Medium', 'Low'],
-            default=['Critical', 'High', 'Medium', 'Low']
+            ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFORMATIONAL'],
+            default=['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFORMATIONAL']
         )
     
     with col2:
-        framework_filter = st.multiselect(
-            "Filter by Framework",
-            options=['PCI DSS 3.2.1', 'SOC 2', 'HIPAA', 'GDPR', 'Best Practice'],
-            default=['PCI DSS 3.2.1', 'SOC 2', 'HIPAA', 'GDPR', 'Best Practice']
+        compliance_filter = st.multiselect(
+            "Filter by Compliance Status",
+            ['PASSED', 'FAILED', 'WARNING', 'NOT_AVAILABLE'],
+            default=['PASSED', 'FAILED', 'WARNING', 'NOT_AVAILABLE']
         )
     
     with col3:
-        status_filter = st.multiselect(
-            "Filter by Status",
-            options=['Open', 'In Progress', 'Resolved'],
-            default=['Open', 'In Progress']
-        )
-    
-    st.markdown("---")
+        max_findings = st.slider("Max findings to display", 10, 100, 50)
     
     # Filter findings
     filtered_findings = [
-        f for f in SAMPLE_FINDINGS
-        if f['severity'] in severity_filter
-        and f['framework'] in framework_filter
-        and f['status'] in status_filter
-    ]
+        f for f in security_findings
+        if f.get('Severity', {}).get('Label', '') in severity_filter
+        and f.get('Compliance', {}).get('Status', '') in compliance_filter
+    ][:max_findings]
     
-    # Summary metrics
-    col1, col2, col3, col4 = st.columns(4)
+    # Display findings table
+    df = process_findings_for_display(filtered_findings)
+    if not df.empty:
+        st.dataframe(df, use_container_width=True, height=400)
     
-    critical_count = len([f for f in filtered_findings if f['severity'] == 'Critical'])
-    high_count = len([f for f in filtered_findings if f['severity'] == 'High'])
-    medium_count = len([f for f in filtered_findings if f['severity'] == 'Medium'])
-    low_count = len([f for f in filtered_findings if f['severity'] == 'Low'])
-    
-    col1.metric("Critical", critical_count, delta=None)
-    col2.metric("High", high_count, delta=None)
-    col3.metric("Medium", medium_count, delta=None)
-    col4.metric("Low", low_count, delta=None)
-    
+    # Detailed finding analysis
     st.markdown("---")
+    st.markdown("### 🎯 Deep Dive Analysis")
     
-    # Display findings
-    for finding in filtered_findings:
-        severity_color = {
-            'Critical': '#fee2e2',
-            'High': '#fed7aa',
-            'Medium': '#fef3c7',
-            'Low': '#dbeafe'
-        }
+    if filtered_findings and st.session_state.get('claude_client_initialized', False):
+        selected_finding_idx = st.selectbox(
+            "Select a finding for AI analysis",
+            range(len(filtered_findings)),
+            format_func=lambda x: f"{filtered_findings[x].get('Title', 'Unknown')} - {filtered_findings[x].get('Severity', {}).get('Label', 'Unknown')}"
+        )
         
-        severity_text_color = {
-            'Critical': '#991b1b',
-            'High': '#9a3412',
-            'Medium': '#92400e',
-            'Low': '#1e40af'
-        }
+        selected_finding = filtered_findings[selected_finding_idx]
         
-        with st.expander(f"**{finding['id']}** - {finding['title']} ({finding['severity']})", expanded=False):
-            col1, col2 = st.columns([2, 1])
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("#### 📄 Finding Details")
+            st.json(selected_finding)
+        
+        with col2:
+            st.markdown("#### 🤖 AI Analysis & Remediation")
             
-            with col1:
-                st.markdown(f"""
-                **Severity:** <span style="background: {severity_color[finding['severity']]}; 
-                color: {severity_text_color[finding['severity']]}; padding: 0.25rem 0.75rem; 
-                border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
-                {finding['severity']}</span>
-                
-                **Account:** `{finding['account']}`  
-                **Resource:** `{finding['resource']}`  
-                **Framework:** {finding['framework']}  
-                **Control:** {finding['control']}  
-                **Status:** {finding['status']}
-                
-                **Description:**  
-                {finding['description']}
-                
-                **Recommendation:**  
-                {finding['recommendation']}
-                """, unsafe_allow_html=True)
+            if st.button("🧠 Analyze with Claude AI", key="analyze_finding"):
+                with st.spinner("🤖 Claude is analyzing this finding..."):
+                    analysis = analyze_finding_with_claude(
+                        st.session_state.claude_client,
+                        selected_finding,
+                        "SecurityHub"
+                    )
+                    
+                    st.markdown('<div class="ai-analysis">', unsafe_allow_html=True)
+                    st.markdown(analysis)
+                    st.markdown('</div>', unsafe_allow_html=True)
             
-            with col2:
-                st.markdown("**Actions**")
-                if st.button(f"🤖 Get AI Recommendation", key=f"ai_{finding['id']}"):
-                    st.info("AI recommendation would be generated here...")
-                if st.button(f"⚡ Auto-Remediate", key=f"rem_{finding['id']}"):
-                    st.success("Remediation workflow initiated!")
-                if st.button(f"📋 View Details", key=f"det_{finding['id']}"):
-                    st.info("Detailed view would open here...")
+            if st.button("💻 Generate Remediation Code", key="generate_code"):
+                with st.spinner("🤖 Generating remediation code..."):
+                    code = generate_remediation_code(
+                        st.session_state.claude_client,
+                        selected_finding
+                    )
+                    
+                    st.markdown("##### Automated Remediation Code")
+                    st.code(code, language="python")
 
-def render_ai_intelligence():
-    """Render the AI Intelligence view"""
-    st.markdown("## 🤖 AI Intelligence & Recommendations")
+def render_compliance_framework():
+    """Render compliance framework monitoring"""
+    st.markdown("## 📋 Compliance Framework Monitoring")
     
-    st.markdown("""
-    The AI Intelligence layer uses AWS Bedrock with Claude AI to provide context-aware 
-    security recommendations, vulnerability analysis, and automated remediation strategies.
-    """)
+    if not st.session_state.get('aws_client_initialized', False):
+        st.warning("⚠️ Please configure AWS credentials in the sidebar")
+        return
     
-    st.markdown("---")
-    
-    # AI Capabilities
-    st.markdown("### AI-Powered Capabilities")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("""
-        <div class="metric-card">
-            <h4>🧠 Analysis Completed</h4>
-            <h2 style="color: #3b82f6;">3,456</h2>
-            <p style="font-size: 0.875rem; color: #6b7280;">Across all accounts</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class="metric-card">
-            <h4>💡 Recommendations Generated</h4>
-            <h2 style="color: #22c55e;">892</h2>
-            <p style="font-size: 0.875rem; color: #6b7280;">234 auto-approved</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown("""
-        <div class="metric-card">
-            <h4>📊 Accuracy Rate</h4>
-            <h2 style="color: #eab308;">94%</h2>
-            <p style="font-size: 0.875rem; color: #6b7280;">Verified effectiveness</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
-    # Recent AI Recommendations
-    st.markdown("### 🎯 Recent AI Recommendations")
-    
-    recommendations = [
-        {
-            'title': 'S3 Bucket Encryption Configuration',
-            'finding': 'F001 - S3 Bucket Publicly Accessible',
-            'confidence': 98,
-            'impact': 'High',
-            'recommendation': 'Enable default encryption with AWS KMS and block all public access at the bucket level. This will maintain data confidentiality while preventing unauthorized access.',
-            'estimated_time': '5 minutes',
-            'automation': 'Available'
+    # Compliance frameworks
+    frameworks = {
+        'PCI DSS': {
+            'description': 'Payment Card Industry Data Security Standard',
+            'color': '#FF6384',
+            'key_controls': ['Encryption', 'Access Control', 'Monitoring', 'Network Security']
         },
-        {
-            'title': 'MFA Enforcement Strategy',
-            'finding': 'F002 - IAM User Without MFA',
-            'confidence': 95,
-            'impact': 'High',
-            'recommendation': 'Implement organization-wide SCP to enforce MFA for console access. Create automated workflow to notify users and disable console access after 7 days grace period.',
-            'estimated_time': '15 minutes',
-            'automation': 'Partially Available'
+        'HIPAA': {
+            'description': 'Health Insurance Portability and Accountability Act',
+            'color': '#36A2EB',
+            'key_controls': ['Data Privacy', 'Security', 'Breach Notification', 'Audit Controls']
         },
-        {
-            'title': 'EBS Volume Encryption Remediation',
-            'finding': 'F003 - Unencrypted EBS Volume',
-            'confidence': 92,
-            'impact': 'Medium',
-            'recommendation': 'Create encrypted snapshot, launch new volume from snapshot, and replace attachment. Minimal downtime approach available with step-by-step orchestration.',
-            'estimated_time': '30 minutes',
-            'automation': 'Available'
+        'GDPR': {
+            'description': 'General Data Protection Regulation',
+            'color': '#FFCE56',
+            'key_controls': ['Data Protection', 'Privacy by Design', 'Right to be Forgotten', 'Data Portability']
+        },
+        'SOC 2': {
+            'description': 'Service Organization Control 2',
+            'color': '#4BC0C0',
+            'key_controls': ['Security', 'Availability', 'Processing Integrity', 'Confidentiality']
         }
-    ]
+    }
     
-    for rec in recommendations:
-        with st.expander(f"**{rec['title']}** (Confidence: {rec['confidence']}%)", expanded=False):
-            col1, col2 = st.columns([2, 1])
+    # Display framework cards
+    cols = st.columns(2)
+    
+    for idx, (framework, details) in enumerate(frameworks.items()):
+        with cols[idx % 2]:
+            st.markdown(f"### {framework}")
+            st.markdown(f"*{details['description']}*")
             
-            with col1:
-                st.markdown(f"""
-                **Related Finding:** {rec['finding']}  
-                **Impact:** {rec['impact']}  
-                **Estimated Time:** {rec['estimated_time']}  
-                **Automation:** {rec['automation']}
-                
-                **Recommendation:**  
-                {rec['recommendation']}
-                """)
+            # Simulate compliance score (in real implementation, this would be calculated from findings)
+            config_compliance = st.session_state.get('config_compliance', {})
+            compliant = config_compliance.get('COMPLIANT', 0)
+            total = sum(config_compliance.values()) if config_compliance else 1
+            score = (compliant / total * 100) if total > 0 else 0
             
-            with col2:
-                st.markdown(f"**Confidence Score**")
-                st.progress(rec['confidence'] / 100)
-                st.markdown(f"{rec['confidence']}%")
-                
-                if st.button(f"✅ Approve", key=f"app_{rec['title']}"):
-                    st.success("Recommendation approved!")
-                if st.button(f"⚡ Execute", key=f"exe_{rec['title']}"):
-                    st.info("Executing remediation...")
-    
-    st.markdown("---")
-    
-    # AI Model Information
-    st.markdown("### 🔧 AI Model Configuration")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("""
-        **Primary Model**  
-        AWS Bedrock - Claude 3.5 Sonnet
-        
-        **Capabilities:**
-        - Security finding analysis
-        - Context-aware recommendations
-        - Compliance mapping
-        - Risk assessment
-        - Remediation planning
-        """)
-    
-    with col2:
-        st.markdown("""
-        **Knowledge Base**  
-        RAG with 1,234 security documents
-        
-        **Sources:**
-        - AWS Security Best Practices
-        - Compliance Framework Documentation
-        - Internal Security Playbooks
-        - CVE Database
-        - Threat Intelligence Feeds
-        """)
+            st.progress(score / 100)
+            st.markdown(f"**Compliance Score: {score:.1f}%**")
+            
+            with st.expander("Key Controls"):
+                for control in details['key_controls']:
+                    st.markdown(f"- {control}")
 
-def render_simulation():
-    """Render the Live Simulation view"""
-    st.markdown("## ⚡ Live Platform Simulation")
+def render_guardduty_threats():
+    """Render GuardDuty threat monitoring"""
+    st.markdown("## 🚨 GuardDuty Threat Detection")
     
-    st.markdown("""
-    Watch the platform in action with a live simulation of security finding detection, 
-    AI analysis, and automated remediation across the multi-account infrastructure.
-    """)
+    if not st.session_state.get('aws_client_initialized', False):
+        st.warning("⚠️ Please configure AWS credentials in the sidebar")
+        return
     
-    st.markdown("---")
+    guardduty_findings = st.session_state.get('guardduty_findings', [])
     
-    # Control panel
-    col1, col2, col3, col4 = st.columns([1, 1, 1, 3])
+    if not guardduty_findings:
+        st.success("✅ No active threats detected by GuardDuty!")
+        return
     
-    with col1:
-        if st.button("▶️ Start", disabled=st.session_state.simulation_running, use_container_width=True):
-            st.session_state.simulation_running = True
-            st.session_state.findings = []
-            st.session_state.remediation_logs = []
+    st.warning(f"⚠️ {len(guardduty_findings)} active threats detected")
     
-    with col2:
-        if st.button("⏸️ Pause", disabled=not st.session_state.simulation_running, use_container_width=True):
-            st.session_state.simulation_running = False
-    
-    with col3:
-        if st.button("🔄 Reset", use_container_width=True):
-            st.session_state.simulation_running = False
-            st.session_state.findings = []
-            st.session_state.remediation_logs = []
-            st.rerun()
-    
-    st.markdown("---")
-    
-    # Simulation area
-    if st.session_state.simulation_running:
-        # Add a manual trigger button
-        if st.button("🎲 Generate New Activity", use_container_width=True):
-            # Generate new finding
-            new_finding = random.choice(SAMPLE_FINDINGS)
-            finding_with_time = {
-                **new_finding,
-                'detected_at': datetime.now().strftime("%H:%M:%S"),
-                'ai_score': random.randint(85, 99)
-            }
-            st.session_state.findings.insert(0, finding_with_time)
-            
-            # Generate remediation log
-            if random.random() > 0.5:
-                remediation = {
-                    'time': datetime.now().strftime("%H:%M:%S"),
-                    'action': f"Auto-remediated {new_finding['title']}",
-                    'account': new_finding['account'],
-                    'status': 'Success'
-                }
-                st.session_state.remediation_logs.insert(0, remediation)
-            
-            st.rerun()
-    
-    # Display live findings
-    if st.session_state.findings:
-        st.markdown("### 🔔 Live Security Findings")
+    # Display threat summary
+    for idx, finding in enumerate(guardduty_findings[:10]):  # Show top 10
+        severity = finding.get('Severity', 0)
         
-        for finding in st.session_state.findings[:5]:  # Show last 5
-            severity_color = {
-                'Critical': '#fee2e2',
-                'High': '#fed7aa',
-                'Medium': '#fef3c7',
-                'Low': '#dbeafe'
-            }
-            
-            st.markdown(f"""
-            <div style="background: {severity_color[finding['severity']]}; 
-            padding: 1rem; margin: 0.5rem 0; border-radius: 8px; border-left: 4px solid #ef4444;">
-                <div style="display: flex; justify-content: space-between;">
-                    <div>
-                        <strong>{finding['detected_at']}</strong> - {finding['title']}
-                        <br/><small>Account: {finding['account']} | AI Confidence: {finding['ai_score']}%</small>
-                    </div>
-                    <span style="background: white; padding: 0.25rem 0.75rem; border-radius: 12px; 
-                    font-size: 0.75rem; font-weight: 600;">{finding['severity']}</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
-    # Display remediation logs
-    if st.session_state.remediation_logs:
-        st.markdown("### ✅ Remediation Activity")
+        severity_class = 'critical-finding' if severity >= 7 else \
+                        'high-finding' if severity >= 4 else \
+                        'medium-finding' if severity >= 2 else 'low-finding'
         
-        for log in st.session_state.remediation_logs[:5]:  # Show last 5
-            st.markdown(f"""
-            <div style="background: #d1fae5; padding: 1rem; margin: 0.5rem 0; 
-            border-radius: 8px; border-left: 4px solid #10b981;">
-                <strong>{log['time']}</strong> - {log['action']}
-                <br/><small>Account: {log['account']} | Status: {log['status']}</small>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    # Statistics
-    if st.session_state.findings or st.session_state.remediation_logs:
-        st.markdown("---")
-        st.markdown("### 📊 Simulation Statistics")
+        st.markdown(f'<div class="{severity_class}">', unsafe_allow_html=True)
+        st.markdown(f"**{finding.get('Title', 'Unknown Threat')}**")
+        st.markdown(f"Severity: {severity}/10 | Type: {finding.get('Type', 'Unknown')}")
+        st.markdown(f"Description: {finding.get('Description', 'No description')}")
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        col1, col2, col3, col4 = st.columns(4)
-        
-        col1.metric("Total Findings", len(st.session_state.findings))
-        col2.metric("Remediated", len(st.session_state.remediation_logs))
-        col3.metric("Success Rate", f"{min(100, len(st.session_state.remediation_logs) / max(len(st.session_state.findings), 1) * 100):.0f}%")
-        col4.metric("Avg Response Time", "2.3s")
+        if st.session_state.get('claude_client_initialized', False):
+            if st.button(f"🤖 Analyze Threat #{idx+1}", key=f"threat_{idx}"):
+                with st.spinner("Analyzing threat..."):
+                    analysis = analyze_finding_with_claude(
+                        st.session_state.claude_client,
+                        finding,
+                        "GuardDuty"
+                    )
+                    st.markdown('<div class="ai-analysis">', unsafe_allow_html=True)
+                    st.markdown(analysis)
+                    st.markdown('</div>', unsafe_allow_html=True)
 
-# Main application
+# ============================================================================
+# MAIN APPLICATION
+# ============================================================================
+
 def main():
-    render_header()
+    """Main application entry point"""
+    initialize_session_state()
     
-    # Navigation tabs
-    tabs = st.tabs([
-        "📊 Dashboard",
-        "🔄 End-to-End Workflow",
+    # Render sidebar
+    render_sidebar()
+    
+    # Main navigation
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "📊 Overview Dashboard",
         "🔍 Security Findings",
-        "🤖 AI Intelligence",
-        "⚡ Live Simulation"
+        "📋 Compliance Frameworks",
+        "🚨 Threat Detection"
     ])
     
-    with tabs[0]:
-        render_dashboard()
+    with tab1:
+        render_overview_dashboard()
     
-    with tabs[1]:
-        render_e2e_workflow()
+    with tab2:
+        render_findings_detail()
     
-    with tabs[2]:
-        render_findings()
+    with tab3:
+        render_compliance_framework()
     
-    with tabs[3]:
-        render_ai_intelligence()
-    
-    with tabs[4]:
-        render_simulation()
+    with tab4:
+        render_guardduty_threats()
     
     # Footer
     st.markdown("---")
     st.markdown("""
-    <div style="text-align: center; padding: 2rem; color: #6b7280;">
-        <p style="margin: 0;">
-            <strong>Scalable Multi-Account Architecture</strong> • 
-            Consistent Policy Enforcement • 
-            Centralized Intelligence • 
-            Real-Time Compliance
-        </p>
-        <div style="margin-top: 1rem; font-size: 0.875rem;">
-            <span>🛡️ PCI DSS, HIPAA, GDPR, SOC 2</span> • 
-            <span>🤖 AI-Powered Analysis</span> • 
-            <span>⚡ Automated Remediation</span>
-        </div>
+    <div style='text-align: center; color: #666; padding: 2rem;'>
+        <p><strong>AI-Enhanced AWS Compliance Platform</strong></p>
+        <p>Powered by Anthropic Claude AI | Multi-Account Security Monitoring</p>
+        <p style='font-size: 0.8rem;'>⚠️ Ensure your AWS IAM user has appropriate permissions for Security Hub, Config, and GuardDuty</p>
     </div>
     """, unsafe_allow_html=True)
 
