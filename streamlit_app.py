@@ -2810,61 +2810,61 @@ aws sns publish --topic-arn arn:aws:sns:REGION:ACCOUNT:compliance-alerts \\
                         'HIGH': '#FF9900',
                         'MEDIUM': '#ffbb33',
                         'LOW': '#00C851'
-                    }.get(violation['Severity'], '#gray')
+                    }.get(violation.get('Severity', 'UNKNOWN'), '#gray')
                     
                     # Build title based on resource type
                     if 'Cluster' in violation:
-                        title = f"{violation['Cluster']} / {violation['Namespace']} / {violation['Resource']}"
+                        title = f"{violation.get('Cluster', 'N/A')} / {violation.get('Namespace', 'N/A')} / {violation.get('Resource', 'N/A')}"
                     elif 'Repository' in violation:
-                        title = f"{violation['Repository']} / {violation['FilePath']}"
+                        title = f"{violation.get('Repository', 'N/A')} / {violation.get('FilePath', 'N/A')}"
                     elif 'Image' in violation:
-                        title = f"{violation['Image']} ({violation['Registry']})"
+                        title = f"{violation.get('Image', 'N/A')} ({violation.get('Registry', 'N/A')})"
                     else:
-                        title = f"{violation['Resource']}"
+                        title = f"{violation.get('Resource', 'N/A')}"
                     
-                    with st.expander(f"🚨 [{violation['Severity']}] {title}"):
+                    with st.expander(f"🚨 [{violation.get('Severity', 'UNKNOWN')}] {title}"):
                         col1, col2 = st.columns([2, 1])
                         
                         with col1:
                             st.markdown(f"""
-                            **Account:** {violation['AccountName']} (`{violation['AccountId']}`)  
-                            **Severity:** <span style='color: {severity_color}; font-weight: bold;'>{violation['Severity']}</span>  
-                            **Resource Type:** {violation['ResourceType']}  
-                            **Issue:** {violation['Issue']}  
-                            **Timestamp:** {violation['Timestamp'][:19]}  
+                            **Account:** {violation.get('AccountName', 'N/A')} (`{violation.get('AccountId', 'N/A')}`)  
+                            **Severity:** <span style='color: {severity_color}; font-weight: bold;'>{violation.get('Severity', 'UNKNOWN')}</span>  
+                            **Resource Type:** {violation.get('ResourceType', 'N/A')}  
+                            **Issue:** {violation.get('Issue', 'N/A')}  
+                            **Timestamp:** {violation.get('Timestamp', 'N/A')[:19] if violation.get('Timestamp') else 'N/A'}  
                             """, unsafe_allow_html=True)
                             
                             # Add specific details based on type
                             if 'Cluster' in violation:
                                 st.markdown(f"""
-                                **Cluster:** {violation['Cluster']}  
-                                **Namespace:** {violation['Namespace']}  
-                                **Resource:** {violation['Resource']}  
+                                **Cluster:** {violation.get('Cluster', 'N/A')}  
+                                **Namespace:** {violation.get('Namespace', 'N/A')}  
+                                **Resource:** {violation.get('Resource', 'N/A')}  
                                 """)
                             elif 'Repository' in violation:
                                 st.markdown(f"""
-                                **Repository:** {violation['Repository']}  
-                                **File Path:** `{violation['FilePath']}`  
-                                **Resource:** {violation['Resource']}  
+                                **Repository:** {violation.get('Repository', 'N/A')}  
+                                **File Path:** `{violation.get('FilePath', 'N/A')}`  
+                                **Resource:** {violation.get('Resource', 'N/A')}  
                                 """)
                             elif 'Image' in violation:
                                 st.markdown(f"""
-                                **Registry:** {violation['Registry']}  
-                                **Repository:** {violation['Repository']}  
-                                **Image:** {violation['Image']}  
+                                **Registry:** {violation.get('Registry', 'N/A')}  
+                                **Repository:** {violation.get('Repository', 'N/A')}  
+                                **Image:** {violation.get('Image', 'N/A')}  
                                 """)
                             elif 'Endpoint' in violation:
                                 st.markdown(f"""
-                                **Region:** {violation['Region']}  
-                                **Endpoint:** `{violation['Endpoint']}`  
+                                **Region:** {violation.get('Region', 'N/A')}  
+                                **Endpoint:** `{violation.get('Endpoint', 'N/A')}`  
                                 """)
                             
                             st.markdown(f"""
                             **Description:**  
-                            {violation['Description']}
+                            {violation.get('Description', 'No description available')}
                             
                             **Recommended Remediation:**  
-                            {violation['Remediation']}
+                            {violation.get('Remediation', 'No remediation guidance available')}
                             """)
                         
                         with col2:
@@ -2877,14 +2877,14 @@ aws sns publish --topic-arn arn:aws:sns:REGION:ACCOUNT:compliance-alerts \\
 **🤖 AI Analysis for OPA Violation**
 
 **Risk Assessment:**
-{violation['Severity']}-severity {violation['ResourceType']} misconfiguration detected.
+{violation.get('Severity', 'UNKNOWN')}-severity {violation.get('ResourceType', 'resource')} misconfiguration detected.
 
 **Impact Analysis:**
 - **Resource:** {violation.get('Resource', 'N/A')}
-- **Issue:** {violation['Issue']}
+- **Issue:** {violation.get('Issue', 'N/A')}
 - **Security Impact:** Potential {
-    'system compromise and data breach' if violation['Severity'] == 'CRITICAL' else
-    'privilege escalation or data exposure' if violation['Severity'] == 'HIGH' else
+    'system compromise and data breach' if violation.get('Severity') == 'CRITICAL' else
+    'privilege escalation or data exposure' if violation.get('Severity') == 'HIGH' else
     'security control bypass'
 }
 
@@ -2892,7 +2892,7 @@ aws sns publish --topic-arn arn:aws:sns:REGION:ACCOUNT:compliance-alerts \\
 Policy "{policy['PolicyName']}" enforces: {policy['Description']}
 
 **Detailed Remediation:**
-1. **Immediate:** {violation['Remediation']}
+1. **Immediate:** {violation.get('Remediation', 'N/A')}
 2. **Verify:** Test changes in dev/staging environment
 3. **Deploy:** Apply to production with monitoring
 4. **Prevent:** Add pre-commit hooks or CI/CD gates
@@ -2912,14 +2912,17 @@ Policy "{policy['PolicyName']}" enforces: {policy['Description']}
                                     # Generate appropriate script based on resource type
                                     if 'Cluster' in violation:
                                         script_lang = 'yaml'
-                                        script = f"""# Kubernetes Remediation for {violation['Resource']}
-# {violation['Remediation']}
+                                        resource_name = violation.get('Resource', 'N/A')
+                                        namespace = violation.get('Namespace', 'default')
+                                        remediation = violation.get('Remediation', 'Apply security best practices')
+                                        script = f"""# Kubernetes Remediation for {resource_name}
+# {remediation}
 
 apiVersion: v1
 kind: Pod
 metadata:
-  name: {violation['Resource'].split(': ')[1] if ': ' in violation['Resource'] else 'pod-name'}
-  namespace: {violation['Namespace']}
+  name: {resource_name.split(': ')[1] if ': ' in resource_name else 'pod-name'}
+  namespace: {namespace}
 spec:
   securityContext:
     runAsNonRoot: true
@@ -2941,12 +2944,17 @@ spec:
         cpu: "100m"
         memory: "128Mi"
 """
-                                    elif 'Repository' in violation and 'terraform' in violation['Repository'].lower():
+                                    elif 'Repository' in violation and 'terraform' in violation.get('Repository', '').lower():
                                         script_lang = 'hcl'
-                                        script = f"""# Terraform Remediation for {violation['Resource']}
-# {violation['Remediation']}
+                                        resource_name = violation.get('Resource', 'N/A')
+                                        remediation = violation.get('Remediation', 'Apply security best practices')
+                                        resource_parts = resource_name.split('.')
+                                        resource_type = resource_parts[0] if len(resource_parts) > 0 else 'resource_type'
+                                        resource_id = resource_parts[1] if len(resource_parts) > 1 else 'resource_id'
+                                        script = f"""# Terraform Remediation for {resource_name}
+# {remediation}
 
-resource "{violation['Resource'].split('.')[0]}" "{violation['Resource'].split('.')[1]}" {{
+resource "{resource_type}" "{resource_id}" {{
   # ... existing configuration ...
   
   tags = {{
@@ -2966,14 +2974,16 @@ resource "{violation['Resource'].split('.')[0]}" "{violation['Resource'].split('
 """
                                     else:
                                         script_lang = 'bash'
+                                        resource_name = violation.get('Resource', 'resource')
+                                        remediation = violation.get('Remediation', 'Apply fix')
                                         script = f"""# Remediation Script
-# {violation['Remediation']}
+# {remediation}
 
 # Update resource configuration
-echo "Remediating {violation['Resource']}..."
+echo "Remediating {resource_name}..."
 
 # Apply fix
-# {violation['Remediation']}
+# {remediation}
 
 echo "Remediation complete"
 """
