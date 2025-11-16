@@ -547,50 +547,75 @@ def render_sidebar():
     with st.sidebar:
         st.markdown("## ⚙️ Configuration")
         
-        st.markdown("### 🔑 Anthropic Claude API")
-        claude_api_key = st.text_input(
-            "Claude API Key",
-            type="password",
-            help="Enter your Anthropic API key",
-            key="claude_api_key"
-        )
+        # Check if credentials are in secrets
+        use_secrets = False
+        claude_api_key = None
+        aws_access_key = None
+        aws_secret_key = None
+        aws_region = "us-east-1"
         
-        st.markdown("### ☁️ AWS Credentials")
-        aws_access_key = st.text_input(
-            "AWS Access Key ID",
-            type="password",
-            help="Enter your AWS Access Key ID",
-            key="aws_access_key"
-        )
+        try:
+            # Try to get credentials from Streamlit secrets
+            if hasattr(st, 'secrets'):
+                claude_api_key = st.secrets.get("ANTHROPIC_API_KEY") or st.secrets.get("anthropic_api_key")
+                aws_access_key = st.secrets.get("AWS_ACCESS_KEY_ID") or st.secrets.get("aws_access_key_id")
+                aws_secret_key = st.secrets.get("AWS_SECRET_ACCESS_KEY") or st.secrets.get("aws_secret_access_key")
+                aws_region = st.secrets.get("AWS_REGION", "us-east-1") or st.secrets.get("aws_region", "us-east-1")
+                
+                if claude_api_key and aws_access_key and aws_secret_key:
+                    use_secrets = True
+                    st.success("🔐 Using credentials from Streamlit secrets")
+        except Exception:
+            pass
         
-        aws_secret_key = st.text_input(
-            "AWS Secret Access Key",
-            type="password",
-            help="Enter your AWS Secret Access Key",
-            key="aws_secret_key"
-        )
-        
-        aws_region = st.selectbox(
-            "AWS Region",
-            ["us-east-1", "us-east-2", "us-west-1", "us-west-2", 
-             "eu-west-1", "eu-central-1", "ap-southeast-1", "ap-northeast-1"],
-            help="Select your AWS region",
-            key="aws_region"
-        )
+        # If not using secrets, show input fields
+        if not use_secrets:
+            st.markdown("### 🔑 Anthropic Claude API")
+            claude_api_key = st.text_input(
+                "Claude API Key",
+                type="password",
+                help="Enter your Anthropic API key",
+                key="claude_api_key"
+            )
+            
+            st.markdown("### ☁️ AWS Credentials")
+            aws_access_key = st.text_input(
+                "AWS Access Key ID",
+                type="password",
+                help="Enter your AWS Access Key ID",
+                key="aws_access_key"
+            )
+            
+            aws_secret_key = st.text_input(
+                "AWS Secret Access Key",
+                type="password",
+                help="Enter your AWS Secret Access Key",
+                key="aws_secret_key"
+            )
+            
+            aws_region = st.selectbox(
+                "AWS Region",
+                ["us-east-1", "us-east-2", "us-west-1", "us-west-2", 
+                 "eu-west-1", "eu-central-1", "ap-southeast-1", "ap-northeast-1"],
+                help="Select your AWS region",
+                key="aws_region"
+            )
+        else:
+            # Show region selector even when using secrets
+            st.markdown("### 🌍 AWS Region")
+            st.info(f"Region: **{aws_region}**")
         
         st.markdown("---")
         
-        if st.button("🚀 Initialize Clients", use_container_width=True):
-            with st.spinner("Initializing AWS and Claude clients..."):
+        # Auto-initialize if using secrets and not already initialized
+        if use_secrets and not st.session_state.get('auto_initialized', False):
+            with st.spinner("Auto-initializing clients from secrets..."):
                 # Initialize Claude client
                 if claude_api_key:
                     claude_client = get_claude_client(claude_api_key)
                     if claude_client:
                         st.session_state.claude_client = claude_client
                         st.session_state.claude_client_initialized = True
-                        st.success("✅ Claude client initialized!")
-                else:
-                    st.error("❌ Please provide Claude API key")
                 
                 # Initialize AWS clients
                 if aws_access_key and aws_secret_key:
@@ -598,13 +623,40 @@ def render_sidebar():
                     if aws_clients:
                         st.session_state.aws_clients = aws_clients
                         st.session_state.aws_client_initialized = True
-                        st.success("✅ AWS clients initialized!")
                         
                         # Get account info
                         account_info = get_account_info(aws_clients['sts'])
                         st.session_state.account_info = account_info
-                else:
-                    st.error("❌ Please provide AWS credentials")
+                
+                st.session_state.auto_initialized = True
+        
+        # Manual initialization button (only show if not using secrets)
+        if not use_secrets:
+            if st.button("🚀 Initialize Clients", use_container_width=True):
+                with st.spinner("Initializing AWS and Claude clients..."):
+                    # Initialize Claude client
+                    if claude_api_key:
+                        claude_client = get_claude_client(claude_api_key)
+                        if claude_client:
+                            st.session_state.claude_client = claude_client
+                            st.session_state.claude_client_initialized = True
+                            st.success("✅ Claude client initialized!")
+                    else:
+                        st.error("❌ Please provide Claude API key")
+                    
+                    # Initialize AWS clients
+                    if aws_access_key and aws_secret_key:
+                        aws_clients = get_aws_clients(aws_access_key, aws_secret_key, aws_region)
+                        if aws_clients:
+                            st.session_state.aws_clients = aws_clients
+                            st.session_state.aws_client_initialized = True
+                            st.success("✅ AWS clients initialized!")
+                            
+                            # Get account info
+                            account_info = get_account_info(aws_clients['sts'])
+                            st.session_state.account_info = account_info
+                    else:
+                        st.error("❌ Please provide AWS credentials")
         
         st.markdown("---")
         
