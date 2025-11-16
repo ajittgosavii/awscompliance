@@ -3963,7 +3963,7 @@ def render_ai_remediation_tab():
         render_remediation_dashboard()
 
 def render_github_gitops_tab():
-    """Render GitHub & GitOps integration tab"""
+    """Render GitHub & GitOps integration tab with Detection and Remediation workflow"""
     st.markdown("## 🐙 GitHub & GitOps Integration")
     
     if not st.session_state.get('github_connected'):
@@ -3973,71 +3973,448 @@ def render_github_gitops_tab():
     st.markdown("""
     <div class='github-section'>
         <h3>📦 Policy as Code Repository</h3>
-        <p>Manage security policies, compliance rules, and remediation scripts through version control</p>
+        <p>Automated Detection, Remediation, and Deployment through GitOps Workflow</p>
     </div>
     """, unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
+    # Main tabs for Detection, Remediation, and Status
+    gitops_tabs = st.tabs(["📊 Status", "🔍 Detection", "🔧 Remediation", "📝 Policy Update"])
     
-    with col1:
-        st.markdown("### Recent Commits")
+    # ==================== STATUS TAB ====================
+    with gitops_tabs[0]:
+        st.markdown("### 📊 Repository & Pipeline Status")
         
-        commits = [
-            {'message': 'Add SCP for S3 encryption', 'author': 'security-team', 'time': '2 hours ago', 'sha': 'abc123'},
-            {'message': 'Update OPA policy for Kubernetes', 'author': 'devops-team', 'time': '5 hours ago', 'sha': 'def456'},
-            {'message': 'Onboard new account: prod-retail-010', 'author': 'automation', 'time': '1 day ago', 'sha': 'ghi789'},
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("#### 📝 Recent Commits")
+            
+            commits = [
+                {'message': 'Add SCP for S3 encryption', 'author': 'security-team', 'time': '2 hours ago', 'sha': 'abc123', 'type': 'SCP'},
+                {'message': 'Update OPA policy for Kubernetes', 'author': 'devops-team', 'time': '5 hours ago', 'sha': 'def456', 'type': 'OPA'},
+                {'message': 'Onboard new account: prod-retail-010', 'author': 'automation', 'time': '1 day ago', 'sha': 'ghi789', 'type': 'Config'},
+                {'message': 'Auto-remediation: Fix S3 public access', 'author': 'claude-ai-bot', 'time': '2 days ago', 'sha': 'jkl012', 'type': 'Remediation'},
+            ]
+            
+            for commit in commits:
+                st.markdown(f"""
+                <div class='policy-card'>
+                    <strong>{commit['message']}</strong>
+                    <span class='service-badge active'>{commit['type']}</span><br>
+                    <small>{commit['author']} • {commit['time']} • {commit['sha']}</small>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown("#### 🔄 CI/CD Pipeline Status")
+            
+            pipelines = [
+                {'name': 'Policy Validation', 'status': 'success', 'duration': '2m 34s', 'last_run': '10 mins ago'},
+                {'name': 'KICS Scan', 'status': 'running', 'duration': '1m 12s', 'last_run': 'Running now'},
+                {'name': 'Terraform Apply', 'status': 'pending', 'duration': '-', 'last_run': 'Queued'},
+                {'name': 'OPA Policy Test', 'status': 'success', 'duration': '45s', 'last_run': '1 hour ago'},
+            ]
+            
+            for pipeline in pipelines:
+                status_icon = {'success': '✅', 'running': '🔄', 'pending': '⏳', 'failed': '❌'}.get(pipeline['status'], '⚪')
+                status_color = {'success': '#4CAF50', 'running': '#FF9900', 'pending': '#FFC107', 'failed': '#F44336'}.get(pipeline['status'], '#9E9E9E')
+                
+                st.markdown(f"""
+                <div class='policy-card'>
+                    {status_icon} <strong>{pipeline['name']}</strong>
+                    <span style='color: {status_color}; font-weight: bold;'>{pipeline['status'].upper()}</span><br>
+                    <small>Duration: {pipeline['duration']} • Last run: {pipeline['last_run']}</small>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # Repository Statistics
+        st.markdown("#### 📈 Repository Statistics")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Commits", "1,247", delta="+12 this week")
+        with col2:
+            st.metric("Active Branches", "8", delta="+2")
+        with col3:
+            st.metric("Pull Requests", "3", delta="0")
+        with col4:
+            st.metric("Policy Files", "156", delta="+5")
+    
+    # ==================== DETECTION TAB ====================
+    with gitops_tabs[1]:
+        st.markdown("### 🔍 Automated Security Detection Workflow")
+        
+        st.markdown("""
+        <div class='ai-analysis'>
+            <h4>🤖 AI-Powered Detection Pipeline</h4>
+            <p>Continuous monitoring and intelligent detection of security issues across AWS accounts</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Detection workflow diagram
+        st.markdown("#### 🔄 Detection Workflow")
+        
+        detection_steps = [
+            {
+                'step': '1️⃣ Event Trigger',
+                'description': 'AWS Config, Security Hub, GuardDuty, Inspector generate events',
+                'tools': ['EventBridge', 'SNS', 'CloudWatch'],
+                'status': 'active'
+            },
+            {
+                'step': '2️⃣ Data Collection',
+                'description': 'Lambda functions collect and normalize security findings',
+                'tools': ['Lambda', 'S3', 'DynamoDB'],
+                'status': 'active'
+            },
+            {
+                'step': '3️⃣ AI Analysis',
+                'description': 'Claude AI analyzes findings for severity and impact',
+                'tools': ['AWS Bedrock', 'Claude AI', 'SageMaker'],
+                'status': 'active'
+            },
+            {
+                'step': '4️⃣ Policy Validation',
+                'description': 'Check against SCP, OPA, and KICS policies',
+                'tools': ['OPA', 'KICS', 'AWS Config'],
+                'status': 'active'
+            },
+            {
+                'step': '5️⃣ GitHub Integration',
+                'description': 'Create GitHub issues and trigger remediation workflows',
+                'tools': ['GitHub Actions', 'GitHub API'],
+                'status': 'active'
+            }
         ]
         
-        for commit in commits:
-            st.markdown(f"""
-            <div class='policy-card'>
-                <strong>{commit['message']}</strong><br>
-                <small>{commit['author']} • {commit['time']} • {commit['sha']}</small>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("### CI/CD Pipeline Status")
+        for step_info in detection_steps:
+            with st.expander(f"{step_info['step']}: {step_info['description']}", expanded=True):
+                col1, col2 = st.columns([2, 1])
+                
+                with col1:
+                    st.markdown(f"**Tools & Services:**")
+                    for tool in step_info['tools']:
+                        st.markdown(f"- 🔧 {tool}")
+                
+                with col2:
+                    status_badge = "🟢 Active" if step_info['status'] == 'active' else "🔴 Inactive"
+                    st.markdown(f"**Status:** {status_badge}")
         
-        pipelines = [
-            {'name': 'Policy Validation', 'status': 'success', 'duration': '2m 34s'},
-            {'name': 'KICS Scan', 'status': 'running', 'duration': '1m 12s'},
-            {'name': 'Terraform Apply', 'status': 'pending', 'duration': '-'},
+        st.markdown("---")
+        
+        # Recent Detections
+        st.markdown("#### 🚨 Recent Security Detections")
+        
+        detections = [
+            {
+                'id': 'DET-001',
+                'title': 'Unencrypted S3 Bucket Detected',
+                'severity': 'HIGH',
+                'account': '123456789012',
+                'resource': 's3://prod-data-bucket',
+                'detected_at': '2024-11-15 14:30:00',
+                'detection_method': 'AWS Config Rule',
+                'ai_analysis': 'High risk: Contains production data, publicly accessible'
+            },
+            {
+                'id': 'DET-002',
+                'title': 'Security Group Port 22 Open to 0.0.0.0/0',
+                'severity': 'CRITICAL',
+                'account': '123456789012',
+                'resource': 'sg-0abcd1234efgh5678',
+                'detected_at': '2024-11-15 13:15:00',
+                'detection_method': 'Security Hub',
+                'ai_analysis': 'Critical: SSH exposed to internet, immediate remediation required'
+            },
+            {
+                'id': 'DET-003',
+                'title': 'IAM User Without MFA',
+                'severity': 'MEDIUM',
+                'account': '987654321098',
+                'resource': 'arn:aws:iam::user/john.doe',
+                'detected_at': '2024-11-15 12:00:00',
+                'detection_method': 'GuardDuty',
+                'ai_analysis': 'Medium risk: User has admin privileges, MFA enforcement recommended'
+            }
         ]
         
-        for pipeline in pipelines:
-            status_class = f'status-{pipeline["status"]}'
-            st.markdown(f"""
-            <div class='policy-card'>
-                <strong>{pipeline['name']}</strong>
-                <span class='pipeline-status {status_class}'>{pipeline['status'].upper()}</span><br>
-                <small>Duration: {pipeline['duration']}</small>
-            </div>
-            """, unsafe_allow_html=True)
+        for detection in detections:
+            severity_color = {'CRITICAL': '#F44336', 'HIGH': '#FF9900', 'MEDIUM': '#FFC107', 'LOW': '#4CAF50'}
+            color = severity_color.get(detection['severity'], '#9E9E9E')
+            
+            with st.expander(f"🔍 {detection['id']}: {detection['title']} - [{detection['severity']}]"):
+                col1, col2 = st.columns([2, 1])
+                
+                with col1:
+                    st.markdown(f"""
+                    **Detection ID:** {detection['id']}  
+                    **Severity:** <span style='color: {color}; font-weight: bold;'>{detection['severity']}</span>  
+                    **Account:** {detection['account']}  
+                    **Resource:** {detection['resource']}  
+                    **Detected:** {detection['detected_at']}  
+                    **Method:** {detection['detection_method']}
+                    
+                    **🤖 AI Analysis:**  
+                    {detection['ai_analysis']}
+                    """, unsafe_allow_html=True)
+                
+                with col2:
+                    st.markdown("**Actions:**")
+                    if st.button(f"🔧 Auto Remediate", key=f"detect_{detection['id']}", use_container_width=True, type="primary"):
+                        st.success("✅ Remediation workflow triggered!")
+                    
+                    if st.button(f"📋 Create Issue", key=f"issue_{detection['id']}", use_container_width=True):
+                        st.info("GitHub issue created: #156")
+                    
+                    if st.button(f"🚫 Suppress", key=f"suppress_{detection['id']}", use_container_width=True):
+                        st.warning("Detection suppressed")
     
-    st.markdown("---")
-    
-    # Create policy update
-    st.markdown("### 📝 Create Policy Update")
-    
-    col1, col2 = st.columns([1, 2])
-    
-    with col1:
-        policy_name = st.text_input("Policy Name", "enforce-encryption")
-        policy_type = st.selectbox("Policy Type", ["SCP", "OPA", "Config Rule"])
-        branch_name = st.text_input("Branch Name", "feature/new-policy")
+    # ==================== REMEDIATION TAB ====================
+    with gitops_tabs[2]:
+        st.markdown("### 🔧 Automated Remediation Workflow")
         
-        if st.button("Create Pull Request", type="primary", use_container_width=True):
-            with st.spinner("Creating PR..."):
-                time.sleep(1)
-                st.success("✅ Pull Request #42 created successfully!")
+        st.markdown("""
+        <div class='remediation-card'>
+            <h4>🤖 AI-Powered Auto-Remediation</h4>
+            <p>Automated remediation with Claude AI code generation and GitOps deployment</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Remediation workflow steps
+        st.markdown("#### 🔄 Remediation Workflow")
+        
+        remediation_steps = [
+            {
+                'step': '1️⃣ Detection Analysis',
+                'description': 'Claude AI analyzes the security finding and determines remediation strategy',
+                'actions': ['Parse finding details', 'Assess impact', 'Determine fix approach'],
+                'automation': 'Fully Automated'
+            },
+            {
+                'step': '2️⃣ Code Generation',
+                'description': 'AI generates remediation code (Lambda, Python, Terraform, CloudFormation)',
+                'actions': ['Generate fix code', 'Create tests', 'Add documentation'],
+                'automation': 'Fully Automated'
+            },
+            {
+                'step': '3️⃣ GitHub Commit',
+                'description': 'Commit remediation code to GitHub repository with detailed context',
+                'actions': ['Create feature branch', 'Commit code', 'Add metadata'],
+                'automation': 'Fully Automated'
+            },
+            {
+                'step': '4️⃣ CI/CD Pipeline',
+                'description': 'GitHub Actions runs validation, testing, and security scans',
+                'actions': ['Run KICS scan', 'Test code', 'Validate policies'],
+                'automation': 'Fully Automated'
+            },
+            {
+                'step': '5️⃣ Approval & Deployment',
+                'description': 'Auto-approve or request human review based on risk level',
+                'actions': ['Risk assessment', 'Auto-approve low risk', 'Deploy to AWS'],
+                'automation': 'Hybrid (Auto/Manual)'
+            },
+            {
+                'step': '6️⃣ Verification',
+                'description': 'Verify remediation success and update finding status',
+                'actions': ['Check resource state', 'Update Security Hub', 'Close GitHub issue'],
+                'automation': 'Fully Automated'
+            }
+        ]
+        
+        for step_info in remediation_steps:
+            with st.expander(f"{step_info['step']}: {step_info['description']}", expanded=True):
+                col1, col2 = st.columns([3, 1])
+                
+                with col1:
+                    st.markdown("**Actions:**")
+                    for action in step_info['actions']:
+                        st.markdown(f"- ✓ {action}")
+                
+                with col2:
+                    automation_color = '#4CAF50' if step_info['automation'] == 'Fully Automated' else '#FF9900'
+                    st.markdown(f"""
+                    <div style='background: {automation_color}; color: white; padding: 0.5rem; border-radius: 5px; text-align: center; font-weight: bold;'>
+                        {step_info['automation']}
+                    </div>
+                    """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # Active Remediations
+        st.markdown("#### 🔄 Active Remediation Tasks")
+        
+        remediations = [
+            {
+                'id': 'REM-001',
+                'finding': 'Unencrypted S3 Bucket',
+                'resource': 's3://prod-data-bucket',
+                'status': 'Code Generated',
+                'progress': 60,
+                'github_pr': '#145',
+                'estimated_time': '5 minutes',
+                'remediation_type': 'Lambda Function',
+                'code_preview': '''
+import boto3
+
+def enable_s3_encryption(bucket_name):
+    s3 = boto3.client('s3')
+    s3.put_bucket_encryption(
+        Bucket=bucket_name,
+        ServerSideEncryptionConfiguration={
+            'Rules': [{
+                'ApplyServerSideEncryptionByDefault': {
+                    'SSEAlgorithm': 'AES256'
+                }
+            }]
+        }
+    )
+    return f"Encryption enabled for {bucket_name}"
+'''
+            },
+            {
+                'id': 'REM-002',
+                'finding': 'Open Security Group Port 22',
+                'resource': 'sg-0abcd1234efgh5678',
+                'status': 'Deployed',
+                'progress': 100,
+                'github_pr': '#144',
+                'estimated_time': 'Completed',
+                'remediation_type': 'Terraform',
+                'code_preview': '''
+resource "aws_security_group_rule" "remove_ssh_public" {
+  type              = "ingress"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+  cidr_blocks       = ["10.0.0.0/8"]  # Internal only
+  security_group_id = "sg-0abcd1234efgh5678"
+}
+'''
+            },
+            {
+                'id': 'REM-003',
+                'finding': 'IAM User Without MFA',
+                'resource': 'arn:aws:iam::user/john.doe',
+                'status': 'Pending Approval',
+                'progress': 40,
+                'github_pr': '#146',
+                'estimated_time': '2 minutes',
+                'remediation_type': 'Python Script',
+                'code_preview': '''
+import boto3
+
+def enforce_mfa(username):
+    iam = boto3.client('iam')
+    # Attach MFA requirement policy
+    iam.attach_user_policy(
+        UserName=username,
+        PolicyArn='arn:aws:iam::aws:policy/RequireMFA'
+    )
+    return f"MFA enforced for user {username}"
+'''
+            }
+        ]
+        
+        for rem in remediations:
+            status_color = {'Code Generated': '#FF9900', 'Deployed': '#4CAF50', 'Pending Approval': '#FFC107', 'Failed': '#F44336'}
+            color = status_color.get(rem['status'], '#9E9E9E')
+            
+            with st.expander(f"🔧 {rem['id']}: {rem['finding']} - [{rem['status']}]", expanded=True):
+                # Progress bar
+                st.progress(rem['progress'] / 100)
+                
+                col1, col2 = st.columns([2, 1])
+                
+                with col1:
+                    st.markdown(f"""
+                    **Remediation ID:** {rem['id']}  
+                    **Finding:** {rem['finding']}  
+                    **Resource:** {rem['resource']}  
+                    **Status:** <span style='color: {color}; font-weight: bold;'>{rem['status']}</span>  
+                    **GitHub PR:** {rem['github_pr']}  
+                    **Type:** {rem['remediation_type']}  
+                    **Estimated Time:** {rem['estimated_time']}
+                    """, unsafe_allow_html=True)
+                    
+                    st.markdown("**Generated Remediation Code:**")
+                    st.code(rem['code_preview'], language='python')
+                
+                with col2:
+                    st.markdown("**Actions:**")
+                    
+                    if rem['status'] == 'Code Generated':
+                        if st.button(f"✅ Approve & Deploy", key=f"approve_{rem['id']}", use_container_width=True, type="primary"):
+                            st.success("✅ Deploying remediation...")
+                        
+                        if st.button(f"📝 Review Code", key=f"review_{rem['id']}", use_container_width=True):
+                            st.info(f"Opening PR {rem['github_pr']}")
+                    
+                    elif rem['status'] == 'Deployed':
+                        st.success("✅ Successfully deployed")
+                        if st.button(f"📊 View Logs", key=f"logs_{rem['id']}", use_container_width=True):
+                            st.info("Opening CloudWatch logs...")
+                    
+                    elif rem['status'] == 'Pending Approval':
+                        if st.button(f"🚀 Deploy Now", key=f"deploy_{rem['id']}", use_container_width=True, type="primary"):
+                            st.success("✅ Deployment started")
+                    
+                    if st.button(f"🔗 View in GitHub", key=f"github_{rem['id']}", use_container_width=True):
+                        st.info(f"Opening PR {rem['github_pr']}")
+        
+        st.markdown("---")
+        
+        # Remediation Statistics
+        st.markdown("#### 📊 Remediation Statistics (Last 30 Days)")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Total Remediations", "127", delta="+15 this week")
+        with col2:
+            st.metric("Success Rate", "94.5%", delta="+2.1%")
+        with col3:
+            st.metric("Avg Time to Fix", "8 mins", delta="-2 mins", delta_color="inverse")
+        with col4:
+            st.metric("Auto-Approved", "89", delta="+12")
     
-    with col2:
-        policy_content = st.text_area(
-            "Policy Content",
-            value='''{\n  "Version": "2012-10-17",\n  "Statement": [{\n    "Effect": "Deny",\n    "Action": "s3:PutObject",\n    "Resource": "*",\n    "Condition": {\n      "StringNotEquals": {\n        "s3:x-amz-server-side-encryption": "AES256"\n      }\n    }\n  }]\n}''',
-            height=200
-        )
+    # ==================== POLICY UPDATE TAB ====================
+    with gitops_tabs[3]:
+        st.markdown("### 📝 Create Policy Update")
+        
+        col1, col2 = st.columns([1, 2])
+        
+        with col1:
+            policy_name = st.text_input("Policy Name", "enforce-encryption")
+            policy_type = st.selectbox("Policy Type", ["SCP", "OPA", "Config Rule", "Lambda Function", "Terraform"])
+            branch_name = st.text_input("Branch Name", "feature/new-policy")
+            
+            st.markdown("#### Policy Metadata")
+            policy_severity = st.selectbox("Severity", ["Critical", "High", "Medium", "Low"])
+            auto_deploy = st.checkbox("Auto-deploy after validation", value=False)
+            
+            if st.button("Create Pull Request", type="primary", use_container_width=True):
+                with st.spinner("Creating PR..."):
+                    time.sleep(1)
+                    st.success("✅ Pull Request #42 created successfully!")
+                    st.info("GitHub Actions pipeline started for validation")
+        
+        with col2:
+            policy_content = st.text_area(
+                "Policy Content",
+                value='''{\n  "Version": "2012-10-17",\n  "Statement": [{\n    "Effect": "Deny",\n    "Action": "s3:PutObject",\n    "Resource": "*",\n    "Condition": {\n      "StringNotEquals": {\n        "s3:x-amz-server-side-encryption": "AES256"\n      }\n    }\n  }]\n}''',
+                height=300
+            )
+            
+            st.markdown("**Preview Impact:**")
+            st.info("📊 This policy will affect 47 S3 buckets across 12 AWS accounts")
+            
+            if st.button("🔍 Validate Policy", use_container_width=True):
+                with st.spinner("Running KICS scan..."):
+                    time.sleep(1)
+                    st.success("✅ Policy validation passed - No security issues found")
 
 def render_account_lifecycle_tab():
     """Render account lifecycle management tab"""
