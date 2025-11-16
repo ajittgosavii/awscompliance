@@ -1018,81 +1018,136 @@ def render_sidebar():
     with st.sidebar:
         st.markdown("## ⚙️ Configuration")
         
-        # AWS Configuration
-        with st.expander("🔐 AWS Credentials", expanded=True):
-            aws_access_key = st.text_input("AWS Access Key ID", type="password", key="aws_key")
-            aws_secret_key = st.text_input("AWS Secret Access Key", type="password", key="aws_secret")
-            aws_region = st.selectbox("AWS Region", 
-                ['us-east-1', 'us-west-2', 'eu-west-1', 'ap-southeast-1'],
-                key="aws_region"
-            )
+        # Check if secrets are available
+        st.markdown("### 🔐 Credentials Source")
+        st.info("📝 Reading from secrets.toml")
+        
+        # Display current configuration
+        try:
+            has_aws_secrets = all(key in st.secrets.get("aws", {}) for key in ["access_key_id", "secret_access_key", "region"])
+            has_claude_secrets = "api_key" in st.secrets.get("anthropic", {})
+            has_github_secrets = all(key in st.secrets.get("github", {}) for key in ["token", "repo"])
             
-            if st.button("🔗 Connect to AWS"):
-                if aws_access_key and aws_secret_key:
+            st.markdown("**Available Secrets:**")
+            st.markdown(f"{'✅' if has_aws_secrets else '❌'} AWS Credentials")
+            st.markdown(f"{'✅' if has_claude_secrets else '❌'} Anthropic API Key")
+            st.markdown(f"{'✅' if has_github_secrets else '❌'} GitHub Token")
+            
+        except Exception as e:
+            st.error("⚠️ No secrets.toml file found or error reading secrets")
+            st.markdown("""
+            **Please create `.streamlit/secrets.toml` with:**
+            ```toml
+            [aws]
+            access_key_id = "AKIA..."
+            secret_access_key = "..."
+            region = "us-east-1"
+            
+            [anthropic]
+            api_key = "sk-ant-..."
+            
+            [github]
+            token = "ghp_..."
+            repo = "owner/repo"
+            ```
+            """)
+            has_aws_secrets = False
+            has_claude_secrets = False
+            has_github_secrets = False
+        
+        st.markdown("---")
+        
+        # Connection Controls
+        with st.expander("🔗 Connect Services", expanded=True):
+            
+            # AWS Connection
+            if has_aws_secrets:
+                aws_region = st.secrets["aws"]["region"]
+                st.markdown(f"**AWS Region:** `{aws_region}`")
+                
+                if st.button("🔗 Connect to AWS", use_container_width=True):
                     with st.spinner("Initializing AWS clients..."):
-                        clients = get_aws_clients(aws_access_key, aws_secret_key, aws_region)
-                        if clients:
-                            st.session_state.aws_clients = clients
-                            st.session_state.aws_client_initialized = True
-                            st.success("✅ AWS clients initialized!")
-                            
-                            # Fetch initial data
-                            with st.spinner("Fetching security data..."):
-                                st.session_state.security_findings = get_security_hub_findings(
-                                    clients['securityhub']
-                                )
-                                st.session_state.config_compliance = get_config_compliance_summary(
-                                    clients['config']
-                                )
-                                st.session_state.guardduty_findings = get_guardduty_findings(
-                                    clients['guardduty']
-                                )
-                else:
-                    st.error("Please provide AWS credentials")
-        
-        # Claude AI Configuration
-        with st.expander("🤖 Claude AI Configuration"):
-            use_bedrock = st.checkbox("Use AWS Bedrock", value=False)
-            
-            if not use_bedrock:
-                claude_api_key = st.text_input("Anthropic API Key", type="password", key="claude_key")
-                if st.button("🔗 Connect to Claude"):
-                    if claude_api_key:
-                        client = get_claude_client(claude_api_key)
-                        if client:
-                            st.session_state.claude_client = client
-                            st.session_state.claude_client_initialized = True
-                            st.success("✅ Claude AI initialized!")
-                    else:
-                        st.error("Please provide Claude API key")
+                        try:
+                            clients = get_aws_clients(
+                                st.secrets["aws"]["access_key_id"],
+                                st.secrets["aws"]["secret_access_key"],
+                                st.secrets["aws"]["region"]
+                            )
+                            if clients:
+                                st.session_state.aws_clients = clients
+                                st.session_state.aws_client_initialized = True
+                                st.success("✅ AWS clients initialized!")
+                                
+                                # Fetch initial data
+                                with st.spinner("Fetching security data..."):
+                                    st.session_state.security_findings = get_security_hub_findings(
+                                        clients['securityhub']
+                                    )
+                                    st.session_state.config_compliance = get_config_compliance_summary(
+                                        clients['config']
+                                    )
+                                    st.session_state.guardduty_findings = get_guardduty_findings(
+                                        clients['guardduty']
+                                    )
+                                    st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ Failed to connect: {str(e)}")
             else:
-                if st.session_state.get('aws_client_initialized'):
-                    st.session_state.claude_client = get_bedrock_client(st.session_state.aws_clients)
-                    st.session_state.claude_client_initialized = True
-                    st.info("Using AWS Bedrock for Claude AI")
-        
-        # GitHub Configuration
-        with st.expander("🐙 GitHub Integration"):
-            github_token = st.text_input("GitHub Personal Access Token", type="password", key="github_token")
-            github_repo = st.text_input("Repository (owner/repo)", 
-                                       placeholder="myorg/aws-compliance-policies",
-                                       key="github_repo")
+                st.warning("⚠️ AWS secrets not configured")
             
-            if st.button("🔗 Connect to GitHub"):
-                if github_token:
-                    client = get_github_client(github_token)
-                    if client:
-                        st.session_state.github_client = client
-                        st.session_state.github_repo = github_repo
-                        st.session_state.github_client_initialized = True
-                        st.success("✅ GitHub connected!")
-                else:
-                    st.error("Please provide GitHub token")
+            st.markdown("---")
+            
+            # Claude AI Connection
+            if has_claude_secrets:
+                use_bedrock = st.checkbox("Use AWS Bedrock instead", value=False)
+                
+                if st.button("🔗 Connect to Claude AI", use_container_width=True):
+                    if use_bedrock:
+                        if st.session_state.get('aws_client_initialized'):
+                            st.session_state.claude_client = get_bedrock_client(st.session_state.aws_clients)
+                            st.session_state.claude_client_initialized = True
+                            st.success("✅ Claude AI via Bedrock initialized!")
+                            st.rerun()
+                        else:
+                            st.warning("Please connect to AWS first for Bedrock")
+                    else:
+                        try:
+                            client = get_claude_client(st.secrets["anthropic"]["api_key"])
+                            if client:
+                                st.session_state.claude_client = client
+                                st.session_state.claude_client_initialized = True
+                                st.success("✅ Claude AI initialized!")
+                                st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ Failed to connect: {str(e)}")
+            else:
+                st.warning("⚠️ Anthropic API key not configured")
+            
+            st.markdown("---")
+            
+            # GitHub Connection
+            if has_github_secrets:
+                github_repo = st.secrets["github"]["repo"]
+                st.markdown(f"**Repository:** `{github_repo}`")
+                
+                if st.button("🔗 Connect to GitHub", use_container_width=True):
+                    try:
+                        client = get_github_client(st.secrets["github"]["token"])
+                        if client:
+                            st.session_state.github_client = client
+                            st.session_state.github_repo = github_repo
+                            st.session_state.github_client_initialized = True
+                            st.success("✅ GitHub connected!")
+                            st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ Failed to connect: {str(e)}")
+            else:
+                st.info("ℹ️ GitHub integration optional")
         
         st.markdown("---")
         
         # Connection Status
-        st.markdown("### 📊 Status")
+        st.markdown("### 📊 Connection Status")
         status_items = [
             ("AWS", st.session_state.get('aws_client_initialized', False)),
             ("Claude AI", st.session_state.get('claude_client_initialized', False)),
@@ -1101,13 +1156,14 @@ def render_sidebar():
         
         for service, connected in status_items:
             status_icon = "✅" if connected else "❌"
-            st.markdown(f"{status_icon} {service}")
+            status_text = "Connected" if connected else "Not Connected"
+            st.markdown(f"{status_icon} **{service}:** {status_text}")
         
         st.markdown("---")
         
         # Quick Actions
         st.markdown("### ⚡ Quick Actions")
-        if st.button("🔄 Refresh All Data"):
+        if st.button("🔄 Refresh All Data", use_container_width=True):
             if st.session_state.get('aws_client_initialized'):
                 with st.spinner("Refreshing..."):
                     clients = st.session_state.aws_clients
@@ -1118,6 +1174,13 @@ def render_sidebar():
                     st.rerun()
             else:
                 st.warning("Please connect to AWS first")
+        
+        if st.button("🔌 Disconnect All", use_container_width=True):
+            st.session_state.aws_client_initialized = False
+            st.session_state.claude_client_initialized = False
+            st.session_state.github_client_initialized = False
+            st.success("Disconnected all services")
+            st.rerun()
 
 def render_overview_dashboard():
     """Render main overview dashboard"""
