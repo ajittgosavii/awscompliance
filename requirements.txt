@@ -1,9 +1,50 @@
-streamlit==1.28.0
-boto3==1.28.85
-anthropic==0.7.7
-pandas>=2.2.2 
-plotly==5.18.0
-PyGithub==2.1.1
-PyYAML==6.0.1
-python-dotenv==1.0.0
-requests==2.31.0
+# AI-Enhanced AWS Compliance Platform - Requirements
+# Updated: November 15, 2025
+
+# Core Streamlit
+streamlit>=1.28.0
+
+# AWS SDK
+boto3>=1.28.0
+botocore>=1.31.0
+
+# Anthropic Claude AI - IMPORTANT: Use latest version to avoid 'proxies' error
+anthropic>=0.25.0
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Visualization
+plotly>=5.17.0
+
+# GitHub Integration (optional)
+PyGithub>=2.1.0
+
+# YAML Processing
+PyYAML>=6.0.0
+
+# Utilities
+python-dateutil>=2.8.0
+requests>=2.31.0
+
+# Additional AWS/Cloud Tools
+watchtower>=3.0.0  # CloudWatch logging
+awscli>=1.29.0  # AWS CLI tools
+
+# Security & Encryption
+cryptography>=41.0.0
+
+# Testing (optional)
+pytest>=7.4.0
+pytest-mock>=3.11.0
+moto>=4.2.0  # AWS service mocking
+
+# Code Quality (optional)
+black>=23.0.0
+flake8>=6.1.0
+mypy>=1.5.0
+
+# Documentation (optional)
+sphinx>=7.0.0
+sphinx-rtd-theme>=1.3.0
