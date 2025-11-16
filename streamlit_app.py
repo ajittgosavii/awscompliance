@@ -2851,10 +2851,12 @@ echo "Remediation complete"
                         
                         # Show script if generated
                         if f'opa_script_{policy["PolicyName"]}_{idx}' in st.session_state:
-                            st.markdown("---")
-                            st.markdown("**Generated Remediation:**")
                             script_data = st.session_state[f'opa_script_{policy["PolicyName"]}_{idx}']
-                            st.code(script_data['code'], language=script_data['lang'])
+                            # Verify script_data is a dictionary with required keys
+                            if isinstance(script_data, dict) and 'code' in script_data and 'lang' in script_data:
+                                st.markdown("---")
+                                st.markdown("**Generated Remediation:**")
+                                st.code(script_data['code'], language=script_data['lang'])
                 
                 st.markdown("---")
     
