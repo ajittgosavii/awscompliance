@@ -1173,18 +1173,44 @@ def render_sidebar():
                         else:
                             st.warning("⏳ Waiting for AWS connection for Bedrock")
                     else:
-                        try:
-                            client = get_claude_client(st.secrets["anthropic"]["api_key"])
-                            if client:
-                                st.session_state.claude_client = client
-                                st.session_state.claude_client_initialized = True
-                                st.rerun()
-                        except Exception as e:
-                            st.error(f"❌ Auto-connect failed: {str(e)}")
+                        # Add detailed diagnostic info
+                        with st.spinner("Connecting to Claude AI..."):
+                            try:
+                                api_key = st.secrets["anthropic"]["api_key"]
+                                
+                                # Show masked key for verification
+                                if api_key:
+                                    masked_key = api_key[:7] + "..." + api_key[-4:] if len(api_key) > 11 else "***"
+                                    st.info(f"🔑 Using API key: {masked_key}")
+                                
+                                client = get_claude_client(api_key)
+                                
+                                if client:
+                                    st.session_state.claude_client = client
+                                    st.session_state.claude_client_initialized = True
+                                    st.success("✅ Claude AI client created successfully!")
+                                    time.sleep(1)  # Brief pause to show success message
+                                    st.rerun()
+                                else:
+                                    st.error("❌ Client initialization returned None - check error messages above")
+                                    
+                            except KeyError as e:
+                                st.error(f"❌ Missing key in secrets.toml: {str(e)}")
+                                st.code("""Expected format in .streamlit/secrets.toml:
+[anthropic]
+api_key = "sk-ant-..."
+""")
+                            except Exception as e:
+                                st.error(f"❌ Auto-connect failed: {str(e)}")
+                                st.code(f"Error type: {type(e).__name__}\nDetails: {str(e)}")
                 else:
                     st.success("✅ Connected to Claude AI")
             else:
                 st.warning("⚠️ Anthropic API key not configured")
+                st.code("""Add to .streamlit/secrets.toml:
+[anthropic]
+api_key = "sk-ant-..."
+""")
             
             st.markdown("---")
             
@@ -1223,6 +1249,53 @@ def render_sidebar():
             status_icon = "✅" if connected else "❌"
             status_text = "Connected" if connected else "Not Connected"
             st.markdown(f"{status_icon} **{service}:** {status_text}")
+        
+        # Add diagnostic test button for Claude AI
+        if not st.session_state.get('claude_client_initialized', False):
+            if st.button("🔍 Test Claude AI Connection", use_container_width=True):
+                st.markdown("#### 🔍 Connection Diagnostics")
+                
+                # Check if anthropic package is installed
+                try:
+                    import anthropic
+                    st.success("✅ Anthropic library is installed")
+                    st.info(f"Version: {getattr(anthropic, '__version__', 'Unknown')}")
+                except ImportError:
+                    st.error("❌ Anthropic library not installed")
+                    st.code("pip install anthropic")
+                    return
+                
+                # Check if API key exists in secrets
+                try:
+                    api_key = st.secrets["anthropic"]["api_key"]
+                    if api_key and api_key.startswith("sk-ant-"):
+                        masked_key = api_key[:7] + "..." + api_key[-4:]
+                        st.success(f"✅ API key found: {masked_key}")
+                        
+                        # Try to create a test client
+                        st.info("Testing API key validity...")
+                        try:
+                            test_client = anthropic.Anthropic(api_key=api_key)
+                            # Try a simple API call to verify the key works
+                            st.session_state.claude_client = test_client
+                            st.session_state.claude_client_initialized = True
+                            st.success("✅ Claude AI connected successfully!")
+                            st.balloons()
+                            time.sleep(1)
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ API key validation failed: {str(e)}")
+                            st.info("Please verify your API key at: https://console.anthropic.com/")
+                    else:
+                        st.error("❌ API key format invalid (should start with 'sk-ant-')")
+                except KeyError:
+                    st.error("❌ API key not found in secrets.toml")
+                    st.code("""Add to .streamlit/secrets.toml:
+[anthropic]
+api_key = "sk-ant-..."
+""")
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
         
         st.markdown("---")
         
@@ -1341,7 +1414,11 @@ def render_overview_dashboard():
                     st.markdown(summary)
                     st.markdown('</div>', unsafe_allow_html=True)
         else:
-            st.info("Configure Claude AI to enable AI-powered insights")
+            # Provide specific guidance on what's missing
+            if not st.session_state.get('claude_client_initialized'):
+                st.info("🤖 Configure Claude AI in the sidebar to enable AI-powered insights")
+            elif not security_findings:
+                st.info("📊 No security findings available yet. AI insights will appear once AWS data is loaded.")
     
     with col2:
         st.markdown("### 📈 Trend Analysis")
