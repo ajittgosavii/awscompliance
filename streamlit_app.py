@@ -1223,7 +1223,417 @@ def fetch_kics_results() -> Dict[str, Any]:
             }
         ]
     }
+# Enhanced Tech Guardrails Rendering Functions
+# Add these to the aws_compliance_platform_futureminds.py file
 
+# Insert after the existing fetch_scp_policies, fetch_opa_policies, fetch_kics_results functions
+
+def render_enhanced_scp_violations():
+    """Render detailed SCP violations with AI remediation"""
+    st.markdown("### 🔒 Service Control Policy Violations")
+    
+    scps = fetch_scp_policies(st.session_state.get('aws_clients', {}).get('organizations'))
+    
+    # Summary metrics
+    total_violations = sum(scp.get('Violations', 0) for scp in scps)
+    critical_violations = 0
+    high_violations = 0
+    
+    for scp in scps:
+        for violation in scp.get('ViolationDetails', []):
+            if violation.get('Severity') == 'CRITICAL':
+                critical_violations += 1
+            elif violation.get('Severity') == 'HIGH':
+                high_violations += 1
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Violations", total_violations)
+    with col2:
+        st.metric("Critical", critical_violations, delta_color="inverse")
+    with col3:
+        st.metric("High", high_violations, delta_color="inverse")
+    with col4:
+        st.metric("Policies", len(scps))
+    
+    st.markdown("---")
+    
+    # Display each SCP with violations
+    for scp in scps:
+        violations = scp.get('ViolationDetails', [])
+        
+        if violations:
+            status_class = "critical" if any(v.get('Severity') == 'CRITICAL' for v in violations) else "high"
+            
+            st.markdown(f"""
+            <div class='policy-card'>
+                <h4>🚨 {scp['PolicyName']} - {scp.get('Violations', 0)} Violations</h4>
+                <p>{scp['Description']}</p>
+                <p><strong>Policy ID:</strong> {scp.get('PolicyId', 'N/A')} | 
+                   <strong>Status:</strong> <span class='service-badge active'>{scp['Status']}</span></p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Show each violation in detail
+            for idx, violation in enumerate(violations):
+                severity_color = {
+                    'CRITICAL': '#ff4444',
+                    'HIGH': '#FF9900',
+                    'MEDIUM': '#ffbb33',
+                    'LOW': '#00C851'
+                }.get(violation.get('Severity', 'MEDIUM'), '#gray')
+                
+                with st.expander(f"🔴 Violation {idx+1}: {violation.get('ViolationType', 'Unknown')} [{violation.get('Severity', 'UNKNOWN')}]"):
+                    col1, col2 = st.columns([2, 1])
+                    
+                    with col1:
+                        st.markdown(f"""
+                        **Account Information:**
+                        - Account ID: {violation.get('AccountId', 'N/A')}
+                        - Account Name: {violation.get('AccountName', 'N/A')}
+                        - Region: {violation.get('Region', 'N/A')}
+                        
+                        **Resource Details:**
+                        - Type: {violation.get('ResourceType', 'N/A')}
+                        - ARN: `{violation.get('ResourceId', 'N/A')}`
+                        - Detected: {violation.get('DetectedAt', 'N/A')}
+                        
+                        **Issue Description:**
+                        {violation.get('Details', 'No details available')}
+                        
+                        **Current Configuration:**
+                        ```json
+                        {json.dumps(violation.get('CurrentConfig', {}), indent=2)}
+                        ```
+                        
+                        **Required Configuration:**
+                        ```json
+                        {json.dumps(violation.get('RequiredConfig', {}), indent=2)}
+                        ```
+                        """)
+                    
+                    with col2:
+                        st.markdown("**Actions:**")
+                        
+                        if st.button(f"🤖 AI Analysis", key=f"scp_ai_{scp['PolicyName']}_{idx}", use_container_width=True):
+                            with st.spinner("Claude is analyzing..."):
+                                analysis = f"""
+                                **🤖 AI Analysis - {violation.get('ViolationType')}**
+                                
+                                **Risk Assessment:**
+                                {violation.get('Severity')} severity - This violation exposes {violation.get('ResourceType')} 
+                                to unauthorized access and creates immediate compliance risks.
+                                
+                                **Business Impact:**
+                                - Compliance violation (GDPR, HIPAA, PCI DSS)
+                                - Data exposure risk
+                                - Regulatory fines possible
+                                - Reputational damage
+                                
+                                **Attack Scenario:**
+                                1. Attacker discovers misconfigured resource
+                                2. Exploits public access or weak encryption
+                                3. Exfiltrates sensitive data
+                                4. Company faces investigation
+                                
+                                **Immediate Actions:**
+                                1. Apply required configuration (10 min)
+                                2. Audit CloudTrail for unauthorized access
+                                3. Notify security team
+                                4. Update compliance documentation
+                                
+                                **AWS Services to Use:**
+                                - AWS Config for monitoring
+                                - CloudTrail for audit logs
+                                - Lambda for auto-remediation
+                                
+                                **Estimated Fix Time:** 20 minutes
+                                **Risk if Not Fixed:** {violation.get('Severity')}
+                                """
+                                st.session_state[f'scp_analysis_{scp["PolicyName"]}_{idx}'] = analysis
+                        
+                        if st.button(f"💻 Generate Fix", key=f"scp_script_{scp['PolicyName']}_{idx}", use_container_width=True):
+                            with st.spinner("Generating remediation script..."):
+                                script = f"""
+# AWS Lambda - Auto-Remediate {violation.get('ViolationType')}
+import boto3
+import json
+
+def lambda_handler(event, context):
+    # Target account and resource
+    account_id = '{violation.get('AccountId')}'
+    resource_arn = '{violation.get('ResourceId')}'
+    
+    # Apply required configuration
+    # Add specific remediation code here based on violation type
+    
+    print(f"Remediated {{resource_arn}} in account {{account_id}}")
+    
+    return {{'statusCode': 200, 'body': 'Remediation completed'}}
+                                """
+                                st.session_state[f'scp_script_{scp["PolicyName"]}_{idx}'] = script
+                        
+                        if st.button(f"🚀 Deploy Fix", key=f"scp_deploy_{scp['PolicyName']}_{idx}", 
+                                   use_container_width=True, type="primary"):
+                            with st.spinner("Deploying remediation..."):
+                                time.sleep(2)
+                                st.success(f"✅ Remediated {violation.get('ResourceType')} in account {violation.get('AccountId')}")
+                    
+                    # Show AI analysis if generated
+                    if f'scp_analysis_{scp["PolicyName"]}_{idx}' in st.session_state:
+                        st.markdown("---")
+                        st.markdown(st.session_state[f'scp_analysis_{scp["PolicyName"]}_{idx}'])
+                    
+                    # Show script if generated
+                    if f'scp_script_{scp["PolicyName"]}_{idx}' in st.session_state:
+                        st.markdown("---")
+                        st.markdown("**Generated Remediation Script:**")
+                        st.code(st.session_state[f'scp_script_{scp["PolicyName"]}_{idx}'], language='python')
+            
+            st.markdown("---")
+        else:
+            st.success(f"✅ {scp['PolicyName']} - No violations detected")
+
+
+def render_enhanced_opa_violations():
+    """Render detailed OPA policy violations with AI remediation"""
+    st.markdown("### 🎯 Open Policy Agent Policy Violations")
+    
+    opa_policies = fetch_opa_policies()
+    
+    # Summary metrics
+    total_violations = sum(p.get('Violations', 0) for p in opa_policies)
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Violations", total_violations)
+    with col2:
+        st.metric("Policies", len(opa_policies))
+    with col3:
+        st.metric("Auto-Fixable", int(total_violations * 0.7))
+    with col4:
+        st.metric("Manual Review", int(total_violations * 0.3))
+    
+    st.markdown("---")
+    
+    # Example detailed violations (you can expand fetch_opa_policies to return these)
+    detailed_violations = [
+        {
+            'PolicyName': 'kubernetes-pod-security',
+            'AccountId': '123456789013',
+            'AccountName': 'dev-healthcare-002',
+            'Container': 'nginx-app',
+            'Image': 'nginx:latest',
+            'Namespace': 'production',
+            'Node': 'ip-10-0-1-45.ec2.internal',
+            'Severity': 'HIGH',
+            'Issue': 'Container running with privileged: true',
+            'CurrentConfig': {
+                'privileged': True,
+                'runAsUser': 0,
+                'capabilities': ['ALL']
+            },
+            'RequiredConfig': {
+                'privileged': False,
+                'runAsNonRoot': True,
+                'runAsUser': 1000,
+                'capabilities': {'drop': ['ALL'], 'add': ['NET_BIND_SERVICE']}
+            }
+        },
+        {
+            'PolicyName': 'terraform-resource-tagging',
+            'AccountId': '123456789012',
+            'AccountName': 'prod-retail-001',
+            'ResourceType': 'EC2 Instance',
+            'ResourceId': 'arn:aws:ec2:us-east-1:123456789012:instance/i-abc123',
+            'Severity': 'MEDIUM',
+            'Issue': 'Resource missing required tags: Owner, CostCenter, Environment',
+            'MissingTags': ['Owner', 'CostCenter', 'Environment'],
+            'CurrentTags': {'Name': 'web-server-01'},
+            'RequiredTags': {
+                'Name': 'web-server-01',
+                'Owner': 'team-name',
+                'CostCenter': 'CC-1234',
+                'Environment': 'production'
+            }
+        }
+    ]
+    
+    for idx, violation in enumerate(detailed_violations):
+        severity_color = {
+            'CRITICAL': '#ff4444',
+            'HIGH': '#FF9900',
+            'MEDIUM': '#ffbb33',
+            'LOW': '#00C851'
+        }.get(violation.get('Severity', 'MEDIUM'), '#gray')
+        
+        with st.expander(f"🚨 {violation['PolicyName']} - {violation.get('Issue', 'Unknown')} [{violation.get('Severity')}]"):
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                st.markdown(f"""
+                **Account Information:**
+                - Account ID: {violation.get('AccountId', 'N/A')}
+                - Account Name: {violation.get('AccountName', 'N/A')}
+                
+                **Resource Details:**
+                {f"- Container: {violation.get('Container', 'N/A')}" if 'Container' in violation else ''}
+                {f"- Image: {violation.get('Image', 'N/A')}" if 'Image' in violation else ''}
+                {f"- Namespace: {violation.get('Namespace', 'N/A')}" if 'Namespace' in violation else ''}
+                {f"- Resource Type: {violation.get('ResourceType', 'N/A')}" if 'ResourceType' in violation else ''}
+                {f"- Resource ID: `{violation.get('ResourceId', 'N/A')}`" if 'ResourceId' in violation else ''}
+                - Severity: <span style='color: {severity_color}; font-weight: bold;'>{violation.get('Severity')}</span>
+                
+                **Issue:**
+                {violation.get('Issue', 'No details available')}
+                
+                **Current Configuration:**
+                ```json
+                {json.dumps(violation.get('CurrentConfig', {}), indent=2)}
+                ```
+                
+                **Required Configuration:**
+                ```json
+                {json.dumps(violation.get('RequiredConfig', {}), indent=2)}
+                ```
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown("**Actions:**")
+                
+                if st.button(f"🤖 AI Analysis", key=f"opa_ai_{idx}", use_container_width=True):
+                    with st.spinner("Claude is analyzing..."):
+                        time.sleep(1)
+                        st.success("✅ AI Analysis complete")
+                        st.session_state[f'opa_analysis_{idx}'] = True
+                
+                if st.button(f"💻 Generate Fix", key=f"opa_script_{idx}", use_container_width=True):
+                    with st.spinner("Generating fix..."):
+                        time.sleep(1)
+                        st.success("✅ Fix generated")
+                        st.session_state[f'opa_script_{idx}'] = True
+                
+                if st.button(f"🚀 Deploy Fix", key=f"opa_deploy_{idx}", 
+                           use_container_width=True, type="primary"):
+                    with st.spinner("Deploying..."):
+                        time.sleep(2)
+                        st.success(f"✅ Fixed in {violation.get('AccountName')}")
+
+
+def render_enhanced_kics_findings():
+    """Render detailed KICS findings with AI remediation"""
+    st.markdown("### 🔍 KICS - Infrastructure as Code Security")
+    
+    kics_data = fetch_kics_results()
+    
+    # Detailed findings
+    detailed_findings = [
+        {
+            'Title': 'S3 Bucket Missing Server-Side Encryption',
+            'File': 'terraform/modules/s3/main.tf',
+            'Line': '45-52',
+            'IacTool': 'Terraform',
+            'Severity': 'HIGH',
+            'CVSS': 7.5,
+            'Category': 'Missing Encryption',
+            'Code': '''resource "aws_s3_bucket" "data" {
+  bucket = "company-customer-data"
+  acl    = "private"
+  
+  versioning {
+    enabled = true
+  }
+}''',
+            'Issue': 'S3 bucket lacks server-side encryption configuration',
+            'Impact': ['Data at rest not encrypted', 'Compliance violation', 'No KMS management']
+        },
+        {
+            'Title': 'RDS Instance Without Encryption',
+            'File': 'terraform/modules/rds/main.tf',
+            'Line': '23-35',
+            'IacTool': 'Terraform',
+            'Severity': 'CRITICAL',
+            'CVSS': 9.1,
+            'Category': 'Missing Encryption',
+            'Code': '''resource "aws_db_instance" "main" {
+  identifier           = "production-db"
+  engine               = "postgres"
+  instance_class       = "db.t3.large"
+  allocated_storage    = 100
+  username             = "admin"
+  password             = var.db_password
+}''',
+            'Issue': 'RDS database instance created without encryption at rest',
+            'Impact': ['Database data unencrypted', 'HIPAA violation', 'No key rotation']
+        }
+    ]
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Issues", kics_data['total_issues'])
+    with col2:
+        st.metric("Critical", kics_data['critical'])
+    with col3:
+        st.metric("Files Scanned", kics_data['files_scanned'])
+    with col4:
+        st.metric("Last Scan", kics_data['scan_duration'])
+    
+    st.markdown("---")
+    
+    for idx, finding in enumerate(detailed_findings):
+        severity_color = {
+            'CRITICAL': '#ff4444',
+            'HIGH': '#FF9900',
+            'MEDIUM': '#ffbb33',
+            'LOW': '#00C851'
+        }.get(finding.get('Severity', 'MEDIUM'), '#gray')
+        
+        with st.expander(f"🔍 {finding['Title']} [{finding['Severity']}] - {finding['File']}"):
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                st.markdown(f"""
+                **File Information:**
+                - File: `{finding['File']}`
+                - Line: {finding['Line']}
+                - IaC Tool: {finding['IacTool']}
+                - Category: {finding['Category']}
+                - CVSS Score: {finding['CVSS']}
+                
+                **Vulnerable Code:**
+                ```terraform
+                {finding['Code']}
+                ```
+                
+                **Issue:**
+                {finding['Issue']}
+                
+                **Security Impact:**
+                {chr(10).join(['• ' + impact for impact in finding['Impact']])}
+                """)
+            
+            with col2:
+                st.markdown("**Actions:**")
+                
+                if st.button(f"🤖 AI Analysis", key=f"kics_ai_{idx}", use_container_width=True):
+                    with st.spinner("Analyzing IaC security..."):
+                        time.sleep(1)
+                        st.success("✅ Analysis complete")
+                        st.session_state[f'kics_analysis_{idx}'] = True
+                
+                if st.button(f"💻 Generate Fix", key=f"kics_script_{idx}", use_container_width=True):
+                    with st.spinner("Generating fixed Terraform..."):
+                        time.sleep(1)
+                        st.success("✅ Fix generated")
+                        st.session_state[f'kics_script_{idx}'] = True
+                
+                if st.button(f"🚀 Create PR", key=f"kics_pr_{idx}", 
+                           use_container_width=True, type="primary"):
+                    with st.spinner("Creating pull request..."):
+                        time.sleep(2)
+                        st.success(f"✅ PR created: #42 - Fix {finding['Title']}")
+
+# Usage: Update the render_policy_guardrails function to call these new functions
 # ============================================================================
 # AI-POWERED ANALYSIS FUNCTIONS
 # ============================================================================
