@@ -430,16 +430,20 @@ def process_findings_for_display(findings: List[Dict]) -> pd.DataFrame:
     processed = []
     for finding in findings:
         processed.append({
-            'ID': finding.get('Id', 'Unknown')[:50] + '...',
-            'Title': finding.get('Title', 'Unknown'),
-            'Severity': finding.get('Severity', {}).get('Label', 'Unknown'),
-            'Status': finding.get('Compliance', {}).get('Status', 'Unknown'),
-            'Resource': finding.get('Resources', [{}])[0].get('Type', 'Unknown'),
-            'Created': finding.get('CreatedAt', 'Unknown')[:10],
-            'Updated': finding.get('UpdatedAt', 'Unknown')[:10],
+            'ID': str(finding.get('Id', 'Unknown')[:50]) + '...',
+            'Title': str(finding.get('Title', 'Unknown')),
+            'Severity': str(finding.get('Severity', {}).get('Label', 'Unknown')),
+            'Status': str(finding.get('Compliance', {}).get('Status', 'Unknown')),
+            'Resource': str(finding.get('Resources', [{}])[0].get('Type', 'Unknown')),
+            'Created': str(finding.get('CreatedAt', 'Unknown')[:10]),
+            'Updated': str(finding.get('UpdatedAt', 'Unknown')[:10]),
         })
     
-    return pd.DataFrame(processed)
+    df = pd.DataFrame(processed)
+    # Ensure all columns are strings to avoid ArrowTypeError
+    for col in df.columns:
+        df[col] = df[col].astype(str)
+    return df
 
 def get_severity_counts(findings: List[Dict]) -> Dict:
     """Count findings by severity"""
@@ -466,6 +470,10 @@ def create_severity_chart(severity_counts: Dict):
     df = pd.DataFrame(list(severity_counts.items()), columns=['Severity', 'Count'])
     df = df[df['Count'] > 0]  # Only show non-zero counts
     
+    # Ensure consistent data types
+    df['Severity'] = df['Severity'].astype(str)
+    df['Count'] = pd.to_numeric(df['Count'], errors='coerce').fillna(0).astype(int)
+    
     colors = {
         'CRITICAL': '#8B0000',
         'HIGH': '#FF4444',
@@ -485,6 +493,10 @@ def create_severity_chart(severity_counts: Dict):
 def create_compliance_chart(compliance_data: Dict):
     """Create a bar chart for compliance status"""
     df = pd.DataFrame(list(compliance_data.items()), columns=['Status', 'Count'])
+    
+    # Ensure consistent data types
+    df['Status'] = df['Status'].astype(str)
+    df['Count'] = pd.to_numeric(df['Count'], errors='coerce').fillna(0).astype(int)
     
     colors = {
         'COMPLIANT': '#00C851',
@@ -509,15 +521,17 @@ def create_timeline_chart(findings: List[Dict]):
     for finding in findings:
         created = finding.get('CreatedAt', '')
         if created:
-            dates.append(created[:10])
+            dates.append(str(created[:10]))
     
     if not dates:
         return None
     
     df = pd.DataFrame({'Date': dates})
+    df['Date'] = df['Date'].astype(str)
     df['Count'] = 1
     df = df.groupby('Date').count().reset_index()
     df = df.sort_values('Date')
+    df['Count'] = df['Count'].astype(int)
     
     fig = px.line(df, x='Date', y='Count', 
                   title='Security Findings Over Time',
@@ -566,7 +580,7 @@ def render_sidebar():
         
         st.markdown("---")
         
-        if st.button("🚀 Initialize Clients", use_container_width=True):
+        if st.button("🚀 Initialize Clients", width="stretch"):
             with st.spinner("Initializing AWS and Claude clients..."):
                 # Initialize Claude client
                 if claude_api_key:
@@ -613,7 +627,7 @@ def render_sidebar():
         
         # Refresh data button
         if st.session_state.get('aws_client_initialized', False):
-            if st.button("🔄 Refresh Data", use_container_width=True):
+            if st.button("🔄 Refresh Data", width="stretch"):
                 st.rerun()
 
 # ============================================================================
@@ -698,24 +712,24 @@ def render_overview_dashboard():
     with col1:
         severity_chart = create_severity_chart(severity_counts)
         if severity_chart:
-            st.plotly_chart(severity_chart, use_container_width=True)
+            st.plotly_chart(severity_chart, width="stretch")
     
     with col2:
         compliance_chart = create_compliance_chart(config_compliance)
         if compliance_chart:
-            st.plotly_chart(compliance_chart, use_container_width=True)
+            st.plotly_chart(compliance_chart, width="stretch")
     
     # Timeline
     timeline = create_timeline_chart(security_findings)
     if timeline:
-        st.plotly_chart(timeline, use_container_width=True)
+        st.plotly_chart(timeline, width="stretch")
     
     # AI-Powered Compliance Insights
     if st.session_state.get('claude_client_initialized', False):
         st.markdown("---")
         st.markdown("## 🤖 AI-Powered Compliance Insights")
         
-        if st.button("🧠 Generate Comprehensive Compliance Analysis", use_container_width=True):
+        if st.button("🧠 Generate Comprehensive Compliance Analysis", width="stretch"):
             with st.spinner("🤖 Claude AI is analyzing your compliance posture..."):
                 findings_summary = {
                     'total_findings': len(security_findings),
@@ -779,7 +793,7 @@ def render_findings_detail():
     # Display findings table
     df = process_findings_for_display(filtered_findings)
     if not df.empty:
-        st.dataframe(df, use_container_width=True, height=400)
+        st.dataframe(df, width="stretch", height=400)
     
     # Detailed finding analysis
     st.markdown("---")
