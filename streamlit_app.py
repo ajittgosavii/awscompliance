@@ -580,7 +580,7 @@ def render_sidebar():
         
         st.markdown("---")
         
-        if st.button("🚀 Initialize Clients", width="stretch"):
+        if st.button("🚀 Initialize Clients", use_container_width=True):
             with st.spinner("Initializing AWS and Claude clients..."):
                 # Initialize Claude client
                 if claude_api_key:
@@ -627,7 +627,7 @@ def render_sidebar():
         
         # Refresh data button
         if st.session_state.get('aws_client_initialized', False):
-            if st.button("🔄 Refresh Data", width="stretch"):
+            if st.button("🔄 Refresh Data", use_container_width=True):
                 st.rerun()
 
 # ============================================================================
@@ -729,7 +729,7 @@ def render_overview_dashboard():
         st.markdown("---")
         st.markdown("## 🤖 AI-Powered Compliance Insights")
         
-        if st.button("🧠 Generate Comprehensive Compliance Analysis", width="stretch"):
+        if st.button("🧠 Generate Comprehensive Compliance Analysis", use_container_width=True):
             with st.spinner("🤖 Claude AI is analyzing your compliance posture..."):
                 findings_summary = {
                     'total_findings': len(security_findings),
