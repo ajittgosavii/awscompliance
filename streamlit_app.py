@@ -1057,16 +1057,17 @@ def render_sidebar():
         
         st.markdown("---")
         
-        # Connection Controls
+        # Automatic Connection - Auto-connect on first load
         with st.expander("🔗 Connect Services", expanded=True):
             
-            # AWS Connection
+            # AWS Connection - Automatic
             if has_aws_secrets:
                 aws_region = st.secrets["aws"]["region"]
                 st.markdown(f"**AWS Region:** `{aws_region}`")
                 
-                if st.button("🔗 Connect to AWS", use_container_width=True):
-                    with st.spinner("Initializing AWS clients..."):
+                # Auto-connect if not already connected
+                if not st.session_state.get('aws_client_initialized', False):
+                    with st.spinner("Auto-connecting to AWS..."):
                         try:
                             clients = get_aws_clients(
                                 st.secrets["aws"]["access_key_id"],
@@ -1076,7 +1077,6 @@ def render_sidebar():
                             if clients:
                                 st.session_state.aws_clients = clients
                                 st.session_state.aws_client_initialized = True
-                                st.success("✅ AWS clients initialized!")
                                 
                                 # Fetch initial data
                                 with st.spinner("Fetching security data..."):
@@ -1089,58 +1089,63 @@ def render_sidebar():
                                     st.session_state.guardduty_findings = get_guardduty_findings(
                                         clients['guardduty']
                                     )
-                                    st.rerun()
+                                st.rerun()
                         except Exception as e:
-                            st.error(f"❌ Failed to connect: {str(e)}")
+                            st.error(f"❌ Auto-connect failed: {str(e)}")
+                else:
+                    st.success("✅ Connected to AWS")
             else:
                 st.warning("⚠️ AWS secrets not configured")
             
             st.markdown("---")
             
-            # Claude AI Connection
+            # Claude AI Connection - Automatic
             if has_claude_secrets:
                 use_bedrock = st.checkbox("Use AWS Bedrock instead", value=False)
                 
-                if st.button("🔗 Connect to Claude AI", use_container_width=True):
+                # Auto-connect if not already connected
+                if not st.session_state.get('claude_client_initialized', False):
                     if use_bedrock:
                         if st.session_state.get('aws_client_initialized'):
                             st.session_state.claude_client = get_bedrock_client(st.session_state.aws_clients)
                             st.session_state.claude_client_initialized = True
-                            st.success("✅ Claude AI via Bedrock initialized!")
                             st.rerun()
                         else:
-                            st.warning("Please connect to AWS first for Bedrock")
+                            st.warning("⏳ Waiting for AWS connection for Bedrock")
                     else:
                         try:
                             client = get_claude_client(st.secrets["anthropic"]["api_key"])
                             if client:
                                 st.session_state.claude_client = client
                                 st.session_state.claude_client_initialized = True
-                                st.success("✅ Claude AI initialized!")
                                 st.rerun()
                         except Exception as e:
-                            st.error(f"❌ Failed to connect: {str(e)}")
+                            st.error(f"❌ Auto-connect failed: {str(e)}")
+                else:
+                    st.success("✅ Connected to Claude AI")
             else:
                 st.warning("⚠️ Anthropic API key not configured")
             
             st.markdown("---")
             
-            # GitHub Connection
+            # GitHub Connection - Automatic
             if has_github_secrets:
                 github_repo = st.secrets["github"]["repo"]
                 st.markdown(f"**Repository:** `{github_repo}`")
                 
-                if st.button("🔗 Connect to GitHub", use_container_width=True):
+                # Auto-connect if not already connected
+                if not st.session_state.get('github_client_initialized', False):
                     try:
                         client = get_github_client(st.secrets["github"]["token"])
                         if client:
                             st.session_state.github_client = client
                             st.session_state.github_repo = github_repo
                             st.session_state.github_client_initialized = True
-                            st.success("✅ GitHub connected!")
                             st.rerun()
                     except Exception as e:
-                        st.error(f"❌ Failed to connect: {str(e)}")
+                        st.error(f"❌ Auto-connect failed: {str(e)}")
+                else:
+                    st.success("✅ Connected to GitHub")
             else:
                 st.info("ℹ️ GitHub integration optional")
         
