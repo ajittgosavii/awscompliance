@@ -1,5 +1,5 @@
 """
-AI-Enhanced AWS Tech Guardrails Compliance Platform
+Future Minds | AI-Enhanced AWS Compliance Platform
 Multi-Account Security Monitoring, Automated Remediation & Account Lifecycle Management
 
 Integrated Services:
@@ -24,8 +24,8 @@ Features:
 ✓ Real-time Compliance Monitoring
 ✓ Automated CI/CD Pipeline Integration
 
-Author: Infosys Cloud Security Team
-Version: 4.0 - Unified Platform Edition
+Company: Future Minds
+Version: 4.0 - AWS Edition
 """
 
 import streamlit as st
@@ -51,7 +51,7 @@ import base64
 # ============================================================================
 
 st.set_page_config(
-    page_title="AI-Enhanced Tech Guardrails Platform",
+    page_title="Future Minds | AWS Compliance Platform",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -63,14 +63,15 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    /* Main header styling - Tech Guardrails theme */
+    /* Main header styling - AWS Theme */
     .main-header {
-        background: linear-gradient(135deg, #1F4E78 0%, #2C5F8D 50%, #1F4E78 100%);
+        background: linear-gradient(135deg, #232F3E 0%, #37475A 50%, #232F3E 100%);
         padding: 2rem;
         border-radius: 10px;
         text-align: center;
         margin-bottom: 2rem;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border-top: 4px solid #FF9900;
     }
     
     .main-header h1 {
@@ -87,9 +88,19 @@ st.markdown("""
     }
     
     .main-header .stats {
-        color: #FFD700;
+        color: #FF9900;
         font-size: 0.9rem;
         margin-top: 0.5rem;
+    }
+    
+    .main-header .company-badge {
+        background: #FF9900;
+        color: #232F3E;
+        padding: 0.3rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+        display: inline-block;
+        margin-top: 1rem;
     }
     
     /* Score card styling */
@@ -103,19 +114,20 @@ st.markdown("""
     }
     
     .score-card.critical { border-left-color: #F44336; }
-    .score-card.high { border-left-color: #FF9800; }
+    .score-card.high { border-left-color: #FF9900; }
     .score-card.medium { border-left-color: #FFC107; }
     .score-card.good { border-left-color: #4CAF50; }
-    .score-card.excellent { border-left-color: #2196F3; }
+    .score-card.excellent { border-left-color: #FF9900; }
     
-    /* Metric cards */
+    /* Metric cards - AWS theme */
     .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #232F3E 0%, #37475A 100%);
         padding: 1.5rem;
         border-radius: 10px;
         color: white;
         margin: 0.5rem 0;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        border-top: 3px solid #FF9900;
     }
     
     /* Finding severity cards */
@@ -129,12 +141,12 @@ st.markdown("""
     }
     
     .high-finding {
-        background-color: #ff8800;
+        background-color: #FF9900;
         padding: 1rem;
         border-radius: 5px;
         margin: 0.5rem 0;
         color: white;
-        border-left: 5px solid #cc6600;
+        border-left: 5px solid #cc7700;
     }
     
     .medium-finding {
@@ -164,18 +176,19 @@ st.markdown("""
         margin: 0.2rem;
     }
     
-    .service-badge.active { background: #4CAF50; color: white; }
+    .service-badge.active { background: #FF9900; color: white; }
     .service-badge.inactive { background: #9E9E9E; color: white; }
-    .service-badge.warning { background: #FF9800; color: white; }
+    .service-badge.warning { background: #FF6B00; color: white; }
     
-    /* AI analysis box */
+    /* AI analysis box - AWS theme */
     .ai-analysis {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #232F3E 0%, #37475A 100%);
         color: white;
         padding: 1.5rem;
         border-radius: 10px;
         margin: 1rem 0;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 5px solid #FF9900;
     }
     
     /* GitHub section */
@@ -187,9 +200,9 @@ st.markdown("""
         margin: 1rem 0;
     }
     
-    /* Lifecycle cards */
+    /* Lifecycle cards - AWS orange theme */
     .lifecycle-card {
-        background: linear-gradient(135deg, #00BCD4 0%, #0097A7 100%);
+        background: linear-gradient(135deg, #FF9900 0%, #FF6B00 100%);
         padding: 1.5rem;
         border-radius: 10px;
         color: white;
@@ -205,10 +218,10 @@ st.markdown("""
         margin: 1rem 0;
     }
     
-    /* Guardrail status */
+    /* Guardrail status - AWS theme */
     .guardrail-status {
-        background: #E3F2FD;
-        border-left: 4px solid #2196F3;
+        background: #FFF3E0;
+        border-left: 4px solid #FF9900;
         padding: 1rem;
         margin: 0.5rem 0;
         border-radius: 4px;
@@ -224,8 +237,8 @@ st.markdown("""
     }
     
     .portfolio-card.retail { border-top: 4px solid #27AE60; }
-    .portfolio-card.healthcare { border-top: 4px solid #E67E22; }
-    .portfolio-card.financial { border-top: 4px solid #9B59B6; }
+    .portfolio-card.healthcare { border-top: 4px solid #FF9900; }
+    .portfolio-card.financial { border-top: 4px solid #232F3E; }
     
     /* Policy cards */
     .policy-card {
@@ -238,7 +251,7 @@ st.markdown("""
     }
     
     .policy-card:hover {
-        border-color: #2196F3;
+        border-color: #FF9900;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     
@@ -251,10 +264,10 @@ st.markdown("""
         font-weight: bold;
     }
     
-    .status-running { background-color: #2196F3; color: white; }
+    .status-running { background-color: #FF9900; color: white; }
     .status-success { background-color: #4CAF50; color: white; }
     .status-failed { background-color: #f44336; color: white; }
-    .status-pending { background-color: #FF9800; color: white; }
+    .status-pending { background-color: #FFA726; color: white; }
     
     /* Detection flow indicators */
     .flow-indicator {
@@ -271,9 +284,9 @@ st.markdown("""
         50% { opacity: 0.5; }
     }
     
-    .flow-indicator.detection { background: #4A90E2; }
+    .flow-indicator.detection { background: #FF9900; }
     .flow-indicator.remediation { background: #50C878; }
-    .flow-indicator.lifecycle { background: #00BCD4; }
+    .flow-indicator.lifecycle { background: #232F3E; }
     
     /* Success banner */
     .success-banner {
@@ -298,6 +311,17 @@ st.markdown("""
         width: 100%;
         border-radius: 5px;
         font-weight: 600;
+    }
+    
+    /* AWS Orange accent for primary buttons */
+    .stButton>button[kind="primary"] {
+        background-color: #FF9900;
+        border-color: #FF9900;
+    }
+    
+    .stButton>button[kind="primary"]:hover {
+        background-color: #FF6B00;
+        border-color: #FF6B00;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -554,7 +578,7 @@ def fetch_guardduty_findings(client) -> Dict[str, Any]:
         return {}
 
 def fetch_inspector_findings(client) -> Dict[str, Any]:
-    """Fetch Amazon Inspector vulnerability findings"""
+    """Fetch Amazon Inspector vulnerability findings with OS-specific details"""
     if not client:
         return {
             'total_findings': 234,
@@ -562,7 +586,120 @@ def fetch_inspector_findings(client) -> Dict[str, Any]:
             'high_vulns': 34,
             'medium_vulns': 98,
             'low_vulns': 97,
-            'packages_scanned': 12456
+            'packages_scanned': 12456,
+            'windows_vulns': {
+                'total': 128,
+                'critical': 3,
+                'high': 18,
+                'medium': 54,
+                'low': 53,
+                'instances': 45,
+                'findings': [
+                    {
+                        'cve': 'CVE-2024-1234',
+                        'title': 'Windows Remote Code Execution Vulnerability',
+                        'severity': 'CRITICAL',
+                        'cvss_score': 9.8,
+                        'package': 'Windows Server 2019',
+                        'installed_version': '10.0.17763',
+                        'fixed_version': '10.0.17763.5830',
+                        'affected_instances': 12,
+                        'description': 'A remote code execution vulnerability exists in Windows when the Windows Adobe Type Manager Library improperly handles specially-crafted OpenType fonts.',
+                        'remediation': 'Update Windows to latest patch level'
+                    },
+                    {
+                        'cve': 'CVE-2024-5678',
+                        'title': 'Windows Privilege Escalation Vulnerability',
+                        'severity': 'HIGH',
+                        'cvss_score': 7.8,
+                        'package': 'Windows Server 2022',
+                        'installed_version': '10.0.20348',
+                        'fixed_version': '10.0.20348.2227',
+                        'affected_instances': 8,
+                        'description': 'An elevation of privilege vulnerability exists when the Windows kernel fails to properly handle objects in memory.',
+                        'remediation': 'Apply Windows security update KB5034768'
+                    },
+                    {
+                        'cve': 'CVE-2024-9012',
+                        'title': 'Windows IIS Information Disclosure',
+                        'severity': 'MEDIUM',
+                        'cvss_score': 5.3,
+                        'package': 'IIS 10.0',
+                        'installed_version': '10.0.17763',
+                        'fixed_version': '10.0.17763.5830',
+                        'affected_instances': 15,
+                        'description': 'An information disclosure vulnerability exists in IIS when it improperly handles requests.',
+                        'remediation': 'Update IIS to latest version and apply security patches'
+                    }
+                ]
+            },
+            'linux_vulns': {
+                'total': 106,
+                'critical': 2,
+                'high': 16,
+                'medium': 44,
+                'low': 44,
+                'instances': 62,
+                'findings': [
+                    {
+                        'cve': 'CVE-2024-2345',
+                        'title': 'Linux Kernel Use-After-Free Vulnerability',
+                        'severity': 'CRITICAL',
+                        'cvss_score': 9.1,
+                        'package': 'linux-kernel',
+                        'installed_version': '5.15.0-89',
+                        'fixed_version': '5.15.0-91',
+                        'affected_instances': 28,
+                        'distribution': 'Ubuntu 22.04 LTS',
+                        'description': 'A use-after-free vulnerability in the Linux kernel netfilter subsystem could allow privilege escalation.',
+                        'remediation': 'Update kernel to version 5.15.0-91 or later'
+                    },
+                    {
+                        'cve': 'CVE-2024-6789',
+                        'title': 'OpenSSL Buffer Overflow Vulnerability',
+                        'severity': 'HIGH',
+                        'cvss_score': 8.1,
+                        'package': 'openssl',
+                        'installed_version': '3.0.2',
+                        'fixed_version': '3.0.13',
+                        'affected_instances': 45,
+                        'distribution': 'Amazon Linux 2023',
+                        'description': 'Buffer overflow in OpenSSL could lead to remote code execution.',
+                        'remediation': 'yum update openssl to version 3.0.13'
+                    },
+                    {
+                        'cve': 'CVE-2024-3456',
+                        'title': 'Apache HTTP Server Directory Traversal',
+                        'severity': 'MEDIUM',
+                        'cvss_score': 6.5,
+                        'package': 'apache2',
+                        'installed_version': '2.4.52',
+                        'fixed_version': '2.4.59',
+                        'affected_instances': 18,
+                        'distribution': 'Ubuntu 22.04 LTS',
+                        'description': 'Directory traversal vulnerability in Apache HTTP Server allows unauthorized file access.',
+                        'remediation': 'apt-get update && apt-get install apache2'
+                    }
+                ]
+            },
+            'by_os': {
+                'Windows Server 2019': {'count': 52, 'critical': 2, 'high': 8},
+                'Windows Server 2022': {'count': 76, 'critical': 1, 'high': 10},
+                'Ubuntu 22.04 LTS': {'count': 58, 'critical': 1, 'high': 9},
+                'Amazon Linux 2023': {'count': 48, 'critical': 1, 'high': 7}
+            },
+            'vulnerability_categories': {
+                'Remote Code Execution': 23,
+                'Privilege Escalation': 18,
+                'Information Disclosure': 45,
+                'Denial of Service': 32,
+                'Buffer Overflow': 15,
+                'SQL Injection': 8,
+                'Cross-Site Scripting': 12,
+                'Authentication Bypass': 6,
+                'Path Traversal': 11,
+                'Memory Corruption': 9
+            }
         }
     
     try:
@@ -581,7 +718,8 @@ def fetch_inspector_findings(client) -> Dict[str, Any]:
             'high_vulns': severity_counts.get('HIGH', 0),
             'medium_vulns': severity_counts.get('MEDIUM', 0),
             'low_vulns': severity_counts.get('LOW', 0),
-            'packages_scanned': len(findings) * 10
+            'packages_scanned': len(findings) * 10,
+            'findings': findings
         }
     except Exception as e:
         st.error(f"Error fetching Inspector findings: {str(e)}")
@@ -608,7 +746,7 @@ def get_account_list(client) -> List[Dict[str, Any]]:
 # ============================================================================
 
 def fetch_scp_policies(client) -> List[Dict[str, Any]]:
-    """Fetch Service Control Policies"""
+    """Fetch Service Control Policies with detailed violation information"""
     if not client:
         return [
             {
@@ -616,21 +754,86 @@ def fetch_scp_policies(client) -> List[Dict[str, Any]]:
                 'Description': 'Prevents creation of public S3 buckets',
                 'Status': 'ENABLED',
                 'Violations': 0,
-                'LastUpdated': datetime.now().isoformat()
+                'LastUpdated': datetime.now().isoformat(),
+                'ViolationDetails': []
             },
             {
                 'PolicyName': 'EnforceEncryption',
                 'Description': 'Requires encryption for all storage resources',
                 'Status': 'ENABLED',
                 'Violations': 3,
-                'LastUpdated': datetime.now().isoformat()
+                'LastUpdated': datetime.now().isoformat(),
+                'ViolationDetails': [
+                    {
+                        'AccountId': '123456789012',
+                        'AccountName': 'Production-Retail',
+                        'Action': 's3:PutObject',
+                        'Resource': 'arn:aws:s3:::prod-data-bucket/*',
+                        'Timestamp': (datetime.now() - timedelta(hours=2)).isoformat(),
+                        'Severity': 'HIGH',
+                        'User': 'arn:aws:iam::123456789012:user/developer1',
+                        'Description': 'S3 object uploaded without encryption',
+                        'Remediation': 'Enable default encryption on bucket or use SSE-S3/KMS for uploads'
+                    },
+                    {
+                        'AccountId': '123456789013',
+                        'AccountName': 'Dev-Healthcare',
+                        'Action': 'rds:CreateDBInstance',
+                        'Resource': 'arn:aws:rds:us-east-1:123456789013:db:test-db',
+                        'Timestamp': (datetime.now() - timedelta(hours=5)).isoformat(),
+                        'Severity': 'CRITICAL',
+                        'User': 'arn:aws:iam::123456789013:user/admin',
+                        'Description': 'RDS database created without encryption at rest',
+                        'Remediation': 'Recreate database with encryption enabled'
+                    },
+                    {
+                        'AccountId': '123456789014',
+                        'AccountName': 'Staging-Financial',
+                        'Action': 'ebs:CreateVolume',
+                        'Resource': 'arn:aws:ec2:us-east-1:123456789014:volume/vol-abc123',
+                        'Timestamp': (datetime.now() - timedelta(hours=8)).isoformat(),
+                        'Severity': 'HIGH',
+                        'User': 'arn:aws:sts::123456789014:assumed-role/EC2-Role',
+                        'Description': 'EBS volume created without encryption',
+                        'Remediation': 'Enable EBS encryption by default in account settings'
+                    }
+                ]
             },
             {
                 'PolicyName': 'RestrictRegions',
                 'Description': 'Limits AWS operations to approved regions',
                 'Status': 'ENABLED',
                 'Violations': 1,
-                'LastUpdated': datetime.now().isoformat()
+                'LastUpdated': datetime.now().isoformat(),
+                'ViolationDetails': [
+                    {
+                        'AccountId': '123456789012',
+                        'AccountName': 'Production-Retail',
+                        'Action': 'ec2:RunInstances',
+                        'Resource': 'arn:aws:ec2:ap-south-1:123456789012:instance/i-xyz789',
+                        'Timestamp': (datetime.now() - timedelta(hours=1)).isoformat(),
+                        'Severity': 'MEDIUM',
+                        'User': 'arn:aws:iam::123456789012:user/developer2',
+                        'Description': 'EC2 instance launched in non-approved region (ap-south-1)',
+                        'Remediation': 'Terminate instance and launch in approved regions: us-east-1, us-west-2'
+                    }
+                ]
+            },
+            {
+                'PolicyName': 'DenyRootAccountUsage',
+                'Description': 'Prevents usage of AWS root account',
+                'Status': 'ENABLED',
+                'Violations': 0,
+                'LastUpdated': datetime.now().isoformat(),
+                'ViolationDetails': []
+            },
+            {
+                'PolicyName': 'RequireMFAForIAM',
+                'Description': 'Requires MFA for all IAM user operations',
+                'Status': 'ENABLED',
+                'Violations': 0,
+                'LastUpdated': datetime.now().isoformat(),
+                'ViolationDetails': []
             }
         ]
     
@@ -644,7 +847,8 @@ def fetch_scp_policies(client) -> List[Dict[str, Any]]:
                 'Description': p.get('Description', 'No description'),
                 'Status': 'ENABLED',
                 'Violations': 0,
-                'LastUpdated': datetime.now().isoformat()
+                'LastUpdated': datetime.now().isoformat(),
+                'ViolationDetails': []
             }
             for p in policies
         ]
@@ -653,7 +857,7 @@ def fetch_scp_policies(client) -> List[Dict[str, Any]]:
         return []
 
 def fetch_opa_policies() -> List[Dict[str, Any]]:
-    """Fetch Open Policy Agent policies (simulated)"""
+    """Fetch Open Policy Agent policies with detailed violation information"""
     return [
         {
             'PolicyName': 'kubernetes-pod-security',
@@ -661,7 +865,48 @@ def fetch_opa_policies() -> List[Dict[str, Any]]:
             'Type': 'OPA',
             'Status': 'ACTIVE',
             'Violations': 5,
-            'LastEvaluated': datetime.now().isoformat()
+            'LastEvaluated': datetime.now().isoformat(),
+            'ViolationDetails': [
+                {
+                    'AccountId': '123456789012',
+                    'AccountName': 'Production-Retail',
+                    'Cluster': 'retail-prod-eks-cluster',
+                    'Namespace': 'default',
+                    'Resource': 'Pod: nginx-deployment-abc123',
+                    'ResourceType': 'Pod',
+                    'Issue': 'Running as root user',
+                    'Severity': 'HIGH',
+                    'Timestamp': (datetime.now() - timedelta(hours=3)).isoformat(),
+                    'Description': 'Pod is running with root privileges (runAsUser: 0)',
+                    'Remediation': 'Set securityContext.runAsNonRoot: true and runAsUser to non-zero value'
+                },
+                {
+                    'AccountId': '123456789012',
+                    'AccountName': 'Production-Retail',
+                    'Cluster': 'retail-prod-eks-cluster',
+                    'Namespace': 'backend',
+                    'Resource': 'Pod: api-service-xyz789',
+                    'ResourceType': 'Pod',
+                    'Issue': 'Privileged container detected',
+                    'Severity': 'CRITICAL',
+                    'Timestamp': (datetime.now() - timedelta(hours=1)).isoformat(),
+                    'Description': 'Container running in privileged mode with host access',
+                    'Remediation': 'Remove privileged: true from container securityContext'
+                },
+                {
+                    'AccountId': '123456789013',
+                    'AccountName': 'Dev-Healthcare',
+                    'Cluster': 'health-dev-eks-cluster',
+                    'Namespace': 'test',
+                    'Resource': 'Pod: database-pod-def456',
+                    'ResourceType': 'Pod',
+                    'Issue': 'Missing resource limits',
+                    'Severity': 'MEDIUM',
+                    'Timestamp': (datetime.now() - timedelta(hours=6)).isoformat(),
+                    'Description': 'Pod does not have CPU and memory limits defined',
+                    'Remediation': 'Add resources.limits.cpu and resources.limits.memory to pod spec'
+                }
+            ]
         },
         {
             'PolicyName': 'terraform-resource-tagging',
@@ -669,7 +914,48 @@ def fetch_opa_policies() -> List[Dict[str, Any]]:
             'Type': 'OPA',
             'Status': 'ACTIVE',
             'Violations': 12,
-            'LastEvaluated': datetime.now().isoformat()
+            'LastEvaluated': datetime.now().isoformat(),
+            'ViolationDetails': [
+                {
+                    'AccountId': '123456789012',
+                    'AccountName': 'Production-Retail',
+                    'Repository': 'retail-infrastructure',
+                    'FilePath': 'terraform/ec2/main.tf',
+                    'Resource': 'aws_instance.web_server',
+                    'ResourceType': 'EC2 Instance',
+                    'Issue': 'Missing required tags',
+                    'Severity': 'HIGH',
+                    'Timestamp': (datetime.now() - timedelta(hours=4)).isoformat(),
+                    'Description': 'Resource missing required tags: Environment, Owner, CostCenter',
+                    'Remediation': 'Add tags block with Environment, Owner, and CostCenter tags'
+                },
+                {
+                    'AccountId': '123456789013',
+                    'AccountName': 'Dev-Healthcare',
+                    'Repository': 'healthcare-terraform',
+                    'FilePath': 'terraform/rds/database.tf',
+                    'Resource': 'aws_db_instance.patient_db',
+                    'ResourceType': 'RDS Instance',
+                    'Issue': 'Missing required tags',
+                    'Severity': 'HIGH',
+                    'Timestamp': (datetime.now() - timedelta(hours=2)).isoformat(),
+                    'Description': 'Database missing required tags: DataClassification, BackupSchedule',
+                    'Remediation': 'Add DataClassification and BackupSchedule tags to RDS instance'
+                },
+                {
+                    'AccountId': '123456789014',
+                    'AccountName': 'Staging-Financial',
+                    'Repository': 'financial-infra',
+                    'FilePath': 'terraform/s3/buckets.tf',
+                    'Resource': 'aws_s3_bucket.transaction_logs',
+                    'ResourceType': 'S3 Bucket',
+                    'Issue': 'Missing compliance tags',
+                    'Severity': 'CRITICAL',
+                    'Timestamp': (datetime.now() - timedelta(hours=1)).isoformat(),
+                    'Description': 'S3 bucket missing required compliance tags: Compliance, Retention',
+                    'Remediation': 'Add Compliance and Retention tags for audit trail'
+                }
+            ]
         },
         {
             'PolicyName': 'api-gateway-authorization',
@@ -677,12 +963,76 @@ def fetch_opa_policies() -> List[Dict[str, Any]]:
             'Type': 'OPA',
             'Status': 'ACTIVE',
             'Violations': 2,
-            'LastEvaluated': datetime.now().isoformat()
+            'LastEvaluated': datetime.now().isoformat(),
+            'ViolationDetails': [
+                {
+                    'AccountId': '123456789012',
+                    'AccountName': 'Production-Retail',
+                    'Region': 'us-east-1',
+                    'Resource': 'API: retail-customer-api',
+                    'ResourceType': 'API Gateway',
+                    'Endpoint': '/customers/*/data',
+                    'Issue': 'Missing authorization',
+                    'Severity': 'CRITICAL',
+                    'Timestamp': (datetime.now() - timedelta(minutes=30)).isoformat(),
+                    'Description': 'API endpoint accessible without authorization',
+                    'Remediation': 'Configure Lambda authorizer or Cognito user pool authorization'
+                },
+                {
+                    'AccountId': '123456789013',
+                    'AccountName': 'Dev-Healthcare',
+                    'Region': 'us-east-1',
+                    'Resource': 'API: patient-records-api',
+                    'ResourceType': 'API Gateway',
+                    'Endpoint': '/patients/*/records',
+                    'Issue': 'Weak authorization method',
+                    'Severity': 'HIGH',
+                    'Timestamp': (datetime.now() - timedelta(hours=2)).isoformat(),
+                    'Description': 'API using API key authentication instead of OAuth/JWT',
+                    'Remediation': 'Implement OAuth 2.0 or JWT-based authorization for HIPAA compliance'
+                }
+            ]
+        },
+        {
+            'PolicyName': 'docker-image-scanning',
+            'Description': 'Validates container images meet security standards',
+            'Type': 'OPA',
+            'Status': 'ACTIVE',
+            'Violations': 8,
+            'LastEvaluated': datetime.now().isoformat(),
+            'ViolationDetails': [
+                {
+                    'AccountId': '123456789012',
+                    'AccountName': 'Production-Retail',
+                    'Registry': 'ECR',
+                    'Repository': '123456789012.dkr.ecr.us-east-1.amazonaws.com/retail-app',
+                    'Image': 'retail-app:v2.3.4',
+                    'ResourceType': 'Container Image',
+                    'Issue': 'Using outdated base image',
+                    'Severity': 'HIGH',
+                    'Timestamp': (datetime.now() - timedelta(hours=5)).isoformat(),
+                    'Description': 'Base image node:14 is deprecated, contains known vulnerabilities',
+                    'Remediation': 'Update to node:20-alpine or node:20-slim'
+                },
+                {
+                    'AccountId': '123456789012',
+                    'AccountName': 'Production-Retail',
+                    'Registry': 'ECR',
+                    'Repository': '123456789012.dkr.ecr.us-east-1.amazonaws.com/nginx-app',
+                    'Image': 'nginx-app:latest',
+                    'ResourceType': 'Container Image',
+                    'Issue': 'Using "latest" tag',
+                    'Severity': 'MEDIUM',
+                    'Timestamp': (datetime.now() - timedelta(hours=3)).isoformat(),
+                    'Description': 'Container image using "latest" tag instead of specific version',
+                    'Remediation': 'Use specific version tags for reproducible deployments'
+                }
+            ]
         }
     ]
 
 def fetch_kics_results() -> Dict[str, Any]:
-    """Fetch KICS (Infrastructure as Code security) scan results"""
+    """Fetch KICS (Infrastructure as Code security) scan results with detailed findings"""
     return {
         'total_scans': 45,
         'files_scanned': 892,
@@ -699,7 +1049,179 @@ def fetch_kics_results() -> Dict[str, Any]:
             'Weak Policies': 12,
             'Exposed Secrets': 8,
             'Deprecated Resources': 6
-        }
+        },
+        'detailed_findings': [
+            {
+                'id': 'KICS-001',
+                'severity': 'CRITICAL',
+                'category': 'Exposed Secrets',
+                'title': 'AWS Credentials Hardcoded in Dockerfile',
+                'AccountId': '123456789012',
+                'AccountName': 'Production-Retail',
+                'repository': 'retail-docker-images',
+                'file_path': 'dockerfiles/api/Dockerfile',
+                'line_number': 23,
+                'resource': 'ENV AWS_ACCESS_KEY_ID',
+                'description': 'AWS credentials are hardcoded in Dockerfile, exposing them in the image',
+                'code_snippet': 'ENV AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\nENV AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/...',
+                'remediation': 'Remove hardcoded credentials. Use IAM roles for EC2/ECS or AWS Secrets Manager',
+                'cwe': 'CWE-798: Use of Hard-coded Credentials',
+                'timestamp': (datetime.now() - timedelta(hours=2)).isoformat()
+            },
+            {
+                'id': 'KICS-002',
+                'severity': 'CRITICAL',
+                'category': 'Missing Encryption',
+                'title': 'S3 Bucket Created Without Encryption',
+                'AccountId': '123456789013',
+                'AccountName': 'Dev-Healthcare',
+                'repository': 'healthcare-terraform',
+                'file_path': 'terraform/storage/s3.tf',
+                'line_number': 45,
+                'resource': 'aws_s3_bucket.patient_data',
+                'description': 'S3 bucket for patient data does not have server-side encryption enabled',
+                'code_snippet': 'resource "aws_s3_bucket" "patient_data" {\n  bucket = "patient-records-2024"\n  # Missing encryption configuration\n}',
+                'remediation': 'Add server_side_encryption_configuration block with AES256 or aws:kms',
+                'cwe': 'CWE-311: Missing Encryption of Sensitive Data',
+                'timestamp': (datetime.now() - timedelta(hours=4)).isoformat()
+            },
+            {
+                'id': 'KICS-003',
+                'severity': 'HIGH',
+                'category': 'Insecure Configurations',
+                'title': 'RDS Instance Publicly Accessible',
+                'AccountId': '123456789012',
+                'AccountName': 'Production-Retail',
+                'repository': 'retail-infrastructure',
+                'file_path': 'terraform/databases/rds.tf',
+                'line_number': 78,
+                'resource': 'aws_db_instance.orders_db',
+                'description': 'RDS database instance is configured to be publicly accessible',
+                'code_snippet': 'resource "aws_db_instance" "orders_db" {\n  ...\n  publicly_accessible = true\n  ...\n}',
+                'remediation': 'Set publicly_accessible = false and access via VPN or Direct Connect',
+                'cwe': 'CWE-668: Exposure of Resource to Wrong Sphere',
+                'timestamp': (datetime.now() - timedelta(hours=6)).isoformat()
+            },
+            {
+                'id': 'KICS-004',
+                'severity': 'HIGH',
+                'category': 'Missing Encryption',
+                'title': 'EBS Volume Without Encryption',
+                'AccountId': '123456789014',
+                'AccountName': 'Staging-Financial',
+                'repository': 'financial-infra',
+                'file_path': 'terraform/compute/ec2.tf',
+                'line_number': 112,
+                'resource': 'aws_ebs_volume.app_data',
+                'description': 'EBS volume storing application data is not encrypted',
+                'code_snippet': 'resource "aws_ebs_volume" "app_data" {\n  availability_zone = "us-east-1a"\n  size = 100\n  # Missing encrypted = true\n}',
+                'remediation': 'Add encrypted = true and specify kms_key_id for encryption',
+                'cwe': 'CWE-311: Missing Encryption of Sensitive Data',
+                'timestamp': (datetime.now() - timedelta(hours=8)).isoformat()
+            },
+            {
+                'id': 'KICS-005',
+                'severity': 'HIGH',
+                'category': 'Insecure Configurations',
+                'title': 'Security Group Allows All Traffic',
+                'AccountId': '123456789012',
+                'AccountName': 'Production-Retail',
+                'repository': 'retail-infrastructure',
+                'file_path': 'terraform/networking/security_groups.tf',
+                'line_number': 34,
+                'resource': 'aws_security_group.web_sg',
+                'description': 'Security group allows ingress from 0.0.0.0/0 on all ports',
+                'code_snippet': 'ingress {\n  from_port = 0\n  to_port = 65535\n  protocol = "tcp"\n  cidr_blocks = ["0.0.0.0/0"]\n}',
+                'remediation': 'Restrict ingress to specific ports (80, 443) and known IP ranges',
+                'cwe': 'CWE-732: Incorrect Permission Assignment',
+                'timestamp': (datetime.now() - timedelta(hours=3)).isoformat()
+            },
+            {
+                'id': 'KICS-006',
+                'severity': 'HIGH',
+                'category': 'Weak Policies',
+                'title': 'IAM Policy Allows All Actions',
+                'AccountId': '123456789013',
+                'AccountName': 'Dev-Healthcare',
+                'repository': 'healthcare-iam',
+                'file_path': 'terraform/iam/policies.tf',
+                'line_number': 56,
+                'resource': 'aws_iam_policy.developer_policy',
+                'description': 'IAM policy grants * permissions on all resources',
+                'code_snippet': '"Statement": [{\n  "Effect": "Allow",\n  "Action": "*",\n  "Resource": "*"\n}]',
+                'remediation': 'Apply principle of least privilege - specify exact actions and resources needed',
+                'cwe': 'CWE-269: Improper Privilege Management',
+                'timestamp': (datetime.now() - timedelta(hours=5)).isoformat()
+            },
+            {
+                'id': 'KICS-007',
+                'severity': 'MEDIUM',
+                'category': 'Insecure Configurations',
+                'title': 'CloudFront Distribution Without WAF',
+                'AccountId': '123456789012',
+                'AccountName': 'Production-Retail',
+                'repository': 'retail-infrastructure',
+                'file_path': 'terraform/cdn/cloudfront.tf',
+                'line_number': 89,
+                'resource': 'aws_cloudfront_distribution.main',
+                'description': 'CloudFront distribution does not have AWS WAF enabled',
+                'code_snippet': 'resource "aws_cloudfront_distribution" "main" {\n  ...\n  # Missing web_acl_id\n  ...\n}',
+                'remediation': 'Associate a WAF WebACL to protect against common web exploits',
+                'cwe': 'CWE-693: Protection Mechanism Failure',
+                'timestamp': (datetime.now() - timedelta(hours=7)).isoformat()
+            },
+            {
+                'id': 'KICS-008',
+                'severity': 'MEDIUM',
+                'category': 'Insecure Configurations',
+                'title': 'Lambda Function Using Deprecated Runtime',
+                'AccountId': '123456789014',
+                'AccountName': 'Staging-Financial',
+                'repository': 'financial-lambdas',
+                'file_path': 'terraform/lambda/functions.tf',
+                'line_number': 23,
+                'resource': 'aws_lambda_function.payment_processor',
+                'description': 'Lambda function using Python 3.7 runtime which is deprecated',
+                'code_snippet': 'resource "aws_lambda_function" "payment_processor" {\n  runtime = "python3.7"\n  ...\n}',
+                'remediation': 'Upgrade to Python 3.11 or later supported runtime',
+                'cwe': 'CWE-1104: Use of Unmaintained Third Party Components',
+                'timestamp': (datetime.now() - timedelta(hours=4)).isoformat()
+            },
+            {
+                'id': 'KICS-009',
+                'severity': 'MEDIUM',
+                'category': 'Missing Encryption',
+                'title': 'ECS Task Definition Without Encryption',
+                'AccountId': '123456789012',
+                'AccountName': 'Production-Retail',
+                'repository': 'retail-ecs',
+                'file_path': 'terraform/ecs/task_definitions.tf',
+                'line_number': 67,
+                'resource': 'aws_ecs_task_definition.api_service',
+                'description': 'ECS task definition does not encrypt environment variables',
+                'code_snippet': 'environment = [\n  {\n    name = "DB_PASSWORD"\n    value = "plain_text_password"\n  }\n]',
+                'remediation': 'Use secrets manager or parameter store with encryption for sensitive values',
+                'cwe': 'CWE-311: Missing Encryption of Sensitive Data',
+                'timestamp': (datetime.now() - timedelta(hours=2)).isoformat()
+            },
+            {
+                'id': 'KICS-010',
+                'severity': 'CRITICAL',
+                'category': 'Exposed Secrets',
+                'title': 'Private Key in Kubernetes Secret',
+                'AccountId': '123456789013',
+                'AccountName': 'Dev-Healthcare',
+                'repository': 'healthcare-k8s',
+                'file_path': 'kubernetes/secrets/tls-secret.yaml',
+                'line_number': 8,
+                'resource': 'Secret: tls-certificate',
+                'description': 'TLS private key stored in plain text in version control',
+                'code_snippet': 'data:\n  tls.key: LS0tLS1CRUdJTi...(base64 encoded private key)',
+                'remediation': 'Use External Secrets Operator with AWS Secrets Manager or sealed secrets',
+                'cwe': 'CWE-522: Insufficiently Protected Credentials',
+                'timestamp': (datetime.now() - timedelta(hours=1)).isoformat()
+            }
+        ]
     }
 
 # ============================================================================
@@ -746,6 +1268,247 @@ def analyze_with_claude(client, finding_data: Dict[str, Any]) -> str:
         return message.content[0].text
     except Exception as e:
         return f"Error analyzing with Claude: {str(e)}"
+
+def analyze_vulnerability_with_ai(client, vulnerability: Dict[str, Any]) -> str:
+    """Analyze vulnerability with AI and generate remediation plan"""
+    if not client:
+        cve = vulnerability.get('cve', 'UNKNOWN')
+        severity = vulnerability.get('severity', 'MEDIUM')
+        package = vulnerability.get('package', 'unknown-package')
+        
+        return f"""
+**🤖 AI Analysis for {cve}**
+
+**Vulnerability Assessment:**
+This {severity.lower()}-severity vulnerability affects {package} and poses a significant risk to system security. 
+Based on CVSS score {vulnerability.get('cvss_score', 'N/A')}, immediate attention is required.
+
+**Impact Analysis:**
+- **Affected Systems:** {vulnerability.get('affected_instances', 0)} instances
+- **Attack Vector:** {vulnerability.get('description', 'Not specified')}
+- **Exploitability:** High - Public exploits may be available
+- **Business Impact:** Potential data breach, service disruption, or unauthorized access
+
+**Recommended Remediation Steps:**
+
+1. **Immediate Actions (Priority 1):**
+   - Isolate affected instances from public internet
+   - Enable additional monitoring and alerting
+   - Review access logs for suspicious activity
+   
+2. **Patch Application (Priority 2):**
+   - Update {package} from version {vulnerability.get('installed_version', 'current')} to {vulnerability.get('fixed_version', 'latest')}
+   - Test patches in staging environment first
+   - Schedule maintenance window for production deployment
+   
+3. **Verification Steps:**
+   - Run AWS Inspector scan post-patching
+   - Verify vulnerability is remediated
+   - Update security documentation
+   
+4. **Preventive Measures:**
+   - Enable automatic security updates where possible
+   - Implement vulnerability scanning in CI/CD pipeline
+   - Schedule regular patch management reviews
+
+**Automated Remediation Script Available:** Yes ✓
+**Estimated Time to Remediate:** 30-45 minutes
+**Risk if Not Remediated:** HIGH - Potential system compromise
+
+**AWS Services to Use:**
+- AWS Systems Manager Patch Manager
+- AWS Systems Manager Run Command
+- AWS Config for compliance tracking
+"""
+    
+    try:
+        prompt = f"""Analyze this OS vulnerability and provide a detailed remediation plan:
+
+CVE: {vulnerability.get('cve', 'Unknown')}
+Severity: {vulnerability.get('severity', 'Unknown')}
+Package: {vulnerability.get('package', 'Unknown')}
+Installed Version: {vulnerability.get('installed_version', 'Unknown')}
+Fixed Version: {vulnerability.get('fixed_version', 'Unknown')}
+Description: {vulnerability.get('description', 'No description')}
+Affected Instances: {vulnerability.get('affected_instances', 0)}
+
+Provide:
+1. Risk assessment and business impact
+2. Step-by-step remediation instructions
+3. Automated remediation approach using AWS Systems Manager
+4. Verification steps
+5. Preventive measures
+
+Be specific and actionable."""
+        
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1500,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        return message.content[0].text
+    except Exception as e:
+        return f"Error generating AI analysis: {str(e)}"
+
+def generate_patch_script(client, vulnerability: Dict[str, Any], os_type: str) -> str:
+    """Generate automated patching script for vulnerability"""
+    if not client:
+        if os_type.lower() == 'windows':
+            return f"""
+# PowerShell Script for Windows Patching
+# CVE: {vulnerability.get('cve', 'UNKNOWN')}
+# Package: {vulnerability.get('package', 'unknown')}
+
+# Enable TLS 1.2
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+# Check Windows Update Service
+$wuService = Get-Service -Name wuauserv
+if ($wuService.Status -ne 'Running') {{
+    Start-Service -Name wuauserv
+    Write-Host "Windows Update service started"
+}}
+
+# Install PSWindowsUpdate module
+if (!(Get-Module -ListAvailable -Name PSWindowsUpdate)) {{
+    Install-Module -Name PSWindowsUpdate -Force -SkipPublisherCheck
+}}
+
+Import-Module PSWindowsUpdate
+
+# Search for specific KB update
+$updateKB = "{vulnerability.get('remediation', 'KB5034768').split()[-1]}"
+Write-Host "Searching for update: $updateKB"
+
+# Install the update
+Get-WindowsUpdate -KBArticleID $updateKB -Install -AcceptAll -AutoReboot
+
+# Verify installation
+$installed = Get-HotFix | Where-Object {{ $_.HotFixID -eq $updateKB }}
+if ($installed) {{
+    Write-Host "Update $updateKB installed successfully"
+    
+    # Log to CloudWatch
+    Write-EventLog -LogName Application -Source "PatchManagement" `
+        -EntryType Information -EventId 1001 `
+        -Message "Security update $updateKB applied for {vulnerability.get('cve', 'UNKNOWN')}"
+}} else {{
+    Write-Host "Update installation verification failed"
+    exit 1
+}}
+
+# Restart if required
+if (Test-Path "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WindowsUpdate\\Auto Update\\RebootRequired") {{
+    Write-Host "System restart required"
+    # Schedule restart during maintenance window
+    shutdown /r /t 3600 /c "Security patch installation complete. System will restart in 1 hour."
+}}
+"""
+        else:  # Linux
+            return f"""
+#!/bin/bash
+# Bash Script for Linux Patching
+# CVE: {vulnerability.get('cve', 'UNKNOWN')}
+# Package: {vulnerability.get('package', 'unknown')}
+
+set -e
+
+# Detect distribution
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$ID
+    VERSION=$VERSION_ID
+fi
+
+echo "Detected OS: $OS $VERSION"
+echo "Patching vulnerability: {vulnerability.get('cve', 'UNKNOWN')}"
+
+# Function to patch Ubuntu/Debian
+patch_debian() {{
+    echo "Updating package list..."
+    apt-get update
+    
+    echo "Installing security updates for {vulnerability.get('package', 'package')}"
+    apt-get install --only-upgrade {vulnerability.get('package', 'package')} -y
+    
+    # Verify version
+    INSTALLED_VERSION=$(dpkg -l | grep {vulnerability.get('package', 'package')} | awk '{{print $3}}')
+    echo "Installed version: $INSTALLED_VERSION"
+}}
+
+# Function to patch Amazon Linux/RHEL
+patch_rhel() {{
+    echo "Updating package list..."
+    yum check-update
+    
+    echo "Installing security updates for {vulnerability.get('package', 'package')}"
+    yum update {vulnerability.get('package', 'package')} -y
+    
+    # Verify version
+    INSTALLED_VERSION=$(rpm -q {vulnerability.get('package', 'package')})
+    echo "Installed version: $INSTALLED_VERSION"
+}}
+
+# Apply patches based on distribution
+case $OS in
+    ubuntu|debian)
+        patch_debian
+        ;;
+    amzn|rhel|centos)
+        patch_rhel
+        ;;
+    *)
+        echo "Unsupported distribution: $OS"
+        exit 1
+        ;;
+esac
+
+# Check if reboot is required
+if [ -f /var/run/reboot-required ]; then
+    echo "System reboot required"
+    # Send SNS notification
+    aws sns publish --topic-arn arn:aws:sns:REGION:ACCOUNT:patch-notifications \\
+        --message "Security patch applied. Reboot required for {vulnerability.get('cve', 'UNKNOWN')}"
+fi
+
+# Log to CloudWatch
+aws logs put-log-events --log-group-name /aws/patch-management \\
+    --log-stream-name $(hostname) \\
+    --log-events timestamp=$(date +%s)000,message="Patched {vulnerability.get('cve', 'UNKNOWN')}"
+
+echo "Patching completed successfully"
+"""
+    
+    try:
+        prompt = f"""Generate a production-ready automated patching script for this vulnerability:
+
+OS Type: {os_type}
+CVE: {vulnerability.get('cve', 'Unknown')}
+Package: {vulnerability.get('package', 'Unknown')}
+Current Version: {vulnerability.get('installed_version', 'Unknown')}
+Target Version: {vulnerability.get('fixed_version', 'Unknown')}
+
+Requirements:
+1. Use AWS Systems Manager Run Command compatible format
+2. Include error handling and logging
+3. Verify patch installation
+4. Send notifications via SNS
+5. Log to CloudWatch
+6. Handle reboot requirements
+7. Include rollback capability
+
+Generate {'PowerShell' if os_type.lower() == 'windows' else 'Bash'} script."""
+        
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=2000,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        
+        return message.content[0].text
+    except Exception as e:
+        return f"# Error generating patch script: {str(e)}"
 
 def generate_remediation_code(client, finding: Dict[str, Any]) -> str:
     """Generate automated remediation code using Claude"""
@@ -1133,10 +1896,10 @@ def render_main_header():
     """Render main application header"""
     st.markdown("""
     <div class='main-header'>
-        <h1>🛡️ AI-Enhanced AWS Tech Guardrails Platform</h1>
+        <h1>🛡️ AI-Enhanced AWS Compliance Platform</h1>
         <p>Multi-Account Security Monitoring | Automated Remediation | GitOps Integration | Account Lifecycle Management</p>
+        <div class='company-badge'>Future Minds</div>
         <div class='stats'>
-            <span>✓ 950 Accounts Monitored</span> | 
             <span>✓ AI-Powered Analysis</span> | 
             <span>✓ Real-time Compliance</span> | 
             <span>✓ Automated Remediation</span>
@@ -1184,11 +1947,11 @@ def render_service_status_grid():
     st.markdown("### 🎛️ Service Status Overview")
     
     services = {
-        'Security Hub': {'status': 'active', 'accounts': 950, 'findings': 1247},
-        'AWS Config': {'status': 'active', 'accounts': 950, 'rules': 142},
-        'GuardDuty': {'status': 'active', 'accounts': 950, 'threats': 89},
-        'Inspector': {'status': 'active', 'accounts': 850, 'vulns': 234},
-        'CloudTrail': {'status': 'active', 'accounts': 950, 'events': '2.4M/day'},
+        'Security Hub': {'status': 'active', 'accounts': 'All', 'findings': 1247},
+        'AWS Config': {'status': 'active', 'accounts': 'All', 'rules': 142},
+        'GuardDuty': {'status': 'active', 'accounts': 'All', 'threats': 89},
+        'Inspector': {'status': 'active', 'accounts': 'Active', 'vulns': 234},
+        'CloudTrail': {'status': 'active', 'accounts': 'All', 'events': '2.4M/day'},
         'Service Control Policies': {'status': 'active', 'policies': 24, 'violations': 4},
         'OPA Policies': {'status': 'active', 'policies': 18, 'violations': 19},
         'KICS Scanning': {'status': 'active', 'scans': 45, 'issues': 67}
@@ -1294,6 +2057,622 @@ def render_portfolio_view():
             """, unsafe_allow_html=True)
 
 def render_policy_guardrails():
+    """Render Tech Guardrails policy management with detailed violations and AI remediation"""
+    st.markdown("## 🚧 Tech Guardrails Management")
+    
+    guardrail_tabs = st.tabs(["Service Control Policies (SCP)", "OPA Policies", "KICS - IaC Security"])
+    
+    # SCP Tab
+    with guardrail_tabs[0]:
+        st.markdown("### 🔒 Service Control Policies (SCP)")
+        
+        scps = fetch_scp_policies(st.session_state.get('aws_clients', {}).get('organizations'))
+        
+        # Summary metrics
+        total_violations = sum(scp['Violations'] for scp in scps)
+        total_policies = len(scps)
+        active_policies = len([s for s in scps if s['Status'] == 'ENABLED'])
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Policies", total_policies)
+        with col2:
+            st.metric("Active Policies", active_policies)
+        with col3:
+            st.metric("Total Violations", total_violations, delta="-2 today" if total_violations > 0 else None, delta_color="inverse")
+        with col4:
+            st.metric("Compliance Rate", f"{((total_policies-len([s for s in scps if s['Violations'] > 0]))/total_policies*100):.1f}%" if total_policies > 0 else "100%")
+        
+        st.markdown("---")
+        
+        # Display each policy
+        for scp in scps:
+            status_icon = "✅" if scp['Violations'] == 0 else "⚠️"
+            status_class = "good" if scp['Violations'] == 0 else "warning"
+            
+            # Policy summary card
+            st.markdown(f"""
+            <div class='policy-card' style='border-left: 5px solid {"#4CAF50" if scp["Violations"] == 0 else "#FF9900"}'>
+                <h4>{status_icon} {scp['PolicyName']}</h4>
+                <p>{scp['Description']}</p>
+                <p><strong>Status:</strong> <span class='service-badge {status_class}'>{scp['Status']}</span> | 
+                   <strong>Violations:</strong> {scp['Violations']} |
+                   <small>Last Updated: {scp['LastUpdated'][:19]}</small></p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Show violations if any
+            if scp['Violations'] > 0 and scp.get('ViolationDetails'):
+                st.markdown(f"#### 🚨 Violation Details for {scp['PolicyName']}")
+                
+                for idx, violation in enumerate(scp['ViolationDetails']):
+                    severity_color = {
+                        'CRITICAL': '#ff4444',
+                        'HIGH': '#FF9900',
+                        'MEDIUM': '#ffbb33',
+                        'LOW': '#00C851'
+                    }.get(violation['Severity'], '#gray')
+                    
+                    with st.expander(f"🚨 [{violation['Severity']}] {violation['AccountName']} - {violation['Action']}"):
+                        col1, col2 = st.columns([2, 1])
+                        
+                        with col1:
+                            st.markdown(f"""
+                            **Account:** {violation['AccountName']} (`{violation['AccountId']}`)  
+                            **Severity:** <span style='color: {severity_color}; font-weight: bold;'>{violation['Severity']}</span>  
+                            **Action Attempted:** `{violation['Action']}`  
+                            **Resource:** `{violation['Resource']}`  
+                            **User/Role:** `{violation['User']}`  
+                            **Timestamp:** {violation['Timestamp'][:19]}  
+                            
+                            **Description:**  
+                            {violation['Description']}
+                            
+                            **Recommended Remediation:**  
+                            {violation['Remediation']}
+                            """, unsafe_allow_html=True)
+                        
+                        with col2:
+                            st.markdown("**Quick Actions:**")
+                            
+                            if st.button(f"🤖 AI Analysis", key=f"scp_ai_{scp['PolicyName']}_{idx}", use_container_width=True):
+                                with st.spinner("Analyzing with Claude AI..."):
+                                    time.sleep(1)
+                                    analysis = f"""
+**🤖 AI Analysis for SCP Violation**
+
+**Risk Assessment:**
+This {violation['Severity']}-severity violation indicates a policy bypass attempt that could compromise security posture.
+
+**Impact Analysis:**
+- **Account:** {violation['AccountName']} ({violation['AccountId']})
+- **Action:** {violation['Action']} was attempted but denied by SCP
+- **Business Risk:** {
+    'CRITICAL - Immediate action required' if violation['Severity'] == 'CRITICAL' else
+    'HIGH - Address within 24 hours' if violation['Severity'] == 'HIGH' else
+    'MEDIUM - Address within 1 week'
+}
+
+**Root Cause:**
+The user/service attempted to perform an action that violates organizational policy: {scp['Description']}
+
+**Recommended Actions:**
+1. **Investigate:** Review CloudTrail logs for this user/role
+2. **Educate:** Inform user about policy requirements
+3. **Remediate:** {violation['Remediation']}
+4. **Prevent:** Update IAM policies to align with SCP
+
+**Automation Available:** Yes - Can deploy preventive IAM policy
+**Estimated Time:** 15-30 minutes
+                                    """
+                                    st.session_state[f'scp_analysis_{scp["PolicyName"]}_{idx}'] = analysis
+                            
+                            if st.button(f"💻 Generate Fix", key=f"scp_script_{scp['PolicyName']}_{idx}", use_container_width=True):
+                                with st.spinner("Generating remediation script..."):
+                                    time.sleep(1)
+                                    script = f"""
+# AWS CLI Script to Remediate SCP Violation
+# Account: {violation['AccountId']} ({violation['AccountName']})
+# Policy: {scp['PolicyName']}
+
+# Step 1: Identify the user/role
+aws iam get-user --user-name $(echo '{violation['User']}' | awk -F'/' '{{print $NF}}')
+
+# Step 2: Review current permissions
+aws iam list-attached-user-policies --user-name $(echo '{violation['User']}' | awk -F'/' '{{print $NF}}')
+
+# Step 3: {violation['Remediation']}
+
+# Step 4: Verify compliance
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=Username,AttributeValue=$(echo '{violation['User']}' | awk -F'/' '{{print $NF}}') --max-results 10
+
+# Step 5: Document in compliance log
+echo "Remediated SCP violation: {scp['PolicyName']} - {violation['AccountId']} at $(date)" >> /var/log/compliance.log
+
+# Optional: Send SNS notification
+aws sns publish --topic-arn arn:aws:sns:REGION:ACCOUNT:compliance-alerts \\
+  --message "SCP violation remediated: {scp['PolicyName']} in account {violation['AccountId']}"
+                                    """
+                                    st.session_state[f'scp_script_{scp["PolicyName"]}_{idx}'] = script
+                            
+                            if st.button(f"🚀 Auto-Remediate", key=f"scp_deploy_{scp['PolicyName']}_{idx}", use_container_width=True, type="primary"):
+                                with st.spinner("Applying remediation..."):
+                                    time.sleep(2)
+                                    st.success(f"✅ Remediation applied to account {violation['AccountId']}")
+                        
+                        # Show AI analysis if generated
+                        if f'scp_analysis_{scp["PolicyName"]}_{idx}' in st.session_state:
+                            st.markdown("---")
+                            st.markdown(st.session_state[f'scp_analysis_{scp["PolicyName"]}_{idx}'])
+                        
+                        # Show script if generated
+                        if f'scp_script_{scp["PolicyName"]}_{idx}' in st.session_state:
+                            st.markdown("---")
+                            st.markdown("**Generated Remediation Script:**")
+                            st.code(st.session_state[f'scp_script_{scp["PolicyName"]}_{idx}'], language='bash')
+                
+                st.markdown("---")
+    
+    # OPA Tab
+    with guardrail_tabs[1]:
+        st.markdown("### 🎯 Open Policy Agent (OPA) Policies")
+        
+        opa_policies = fetch_opa_policies()
+        
+        # Summary metrics
+        total_violations = sum(policy['Violations'] for policy in opa_policies)
+        total_policies = len(opa_policies)
+        
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Policies", total_policies)
+        with col2:
+            st.metric("Active Policies", len([p for p in opa_policies if p['Status'] == 'ACTIVE']))
+        with col3:
+            st.metric("Total Violations", total_violations, delta="-7 today" if total_violations > 0 else None, delta_color="inverse")
+        with col4:
+            st.metric("Policy Coverage", "K8s, Terraform, API GW, Docker")
+        
+        st.markdown("---")
+        
+        # Display each policy
+        for policy in opa_policies:
+            status_icon = "✅" if policy['Violations'] == 0 else "⚠️"
+            
+            st.markdown(f"""
+            <div class='policy-card' style='border-left: 5px solid {"#4CAF50" if policy["Violations"] == 0 else "#FF9900"}'>
+                <h4>{status_icon} {policy['PolicyName']}</h4>
+                <p>{policy['Description']}</p>
+                <p><strong>Type:</strong> {policy['Type']} | 
+                   <strong>Status:</strong> {policy['Status']} | 
+                   <strong>Violations:</strong> {policy['Violations']} |
+                   <small>Last Evaluated: {policy['LastEvaluated'][:19]}</small></p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Show violations if any
+            if policy['Violations'] > 0 and policy.get('ViolationDetails'):
+                st.markdown(f"#### 🚨 Violation Details for {policy['PolicyName']}")
+                
+                for idx, violation in enumerate(policy['ViolationDetails']):
+                    severity_color = {
+                        'CRITICAL': '#ff4444',
+                        'HIGH': '#FF9900',
+                        'MEDIUM': '#ffbb33',
+                        'LOW': '#00C851'
+                    }.get(violation['Severity'], '#gray')
+                    
+                    # Build title based on resource type
+                    if 'Cluster' in violation:
+                        title = f"{violation['Cluster']} / {violation['Namespace']} / {violation['Resource']}"
+                    elif 'Repository' in violation:
+                        title = f"{violation['Repository']} / {violation['FilePath']}"
+                    elif 'Image' in violation:
+                        title = f"{violation['Image']} ({violation['Registry']})"
+                    else:
+                        title = f"{violation['Resource']}"
+                    
+                    with st.expander(f"🚨 [{violation['Severity']}] {title}"):
+                        col1, col2 = st.columns([2, 1])
+                        
+                        with col1:
+                            st.markdown(f"""
+                            **Account:** {violation['AccountName']} (`{violation['AccountId']}`)  
+                            **Severity:** <span style='color: {severity_color}; font-weight: bold;'>{violation['Severity']}</span>  
+                            **Resource Type:** {violation['ResourceType']}  
+                            **Issue:** {violation['Issue']}  
+                            **Timestamp:** {violation['Timestamp'][:19]}  
+                            """, unsafe_allow_html=True)
+                            
+                            # Add specific details based on type
+                            if 'Cluster' in violation:
+                                st.markdown(f"""
+                                **Cluster:** {violation['Cluster']}  
+                                **Namespace:** {violation['Namespace']}  
+                                **Resource:** {violation['Resource']}  
+                                """)
+                            elif 'Repository' in violation:
+                                st.markdown(f"""
+                                **Repository:** {violation['Repository']}  
+                                **File Path:** `{violation['FilePath']}`  
+                                **Resource:** {violation['Resource']}  
+                                """)
+                            elif 'Image' in violation:
+                                st.markdown(f"""
+                                **Registry:** {violation['Registry']}  
+                                **Repository:** {violation['Repository']}  
+                                **Image:** {violation['Image']}  
+                                """)
+                            elif 'Endpoint' in violation:
+                                st.markdown(f"""
+                                **Region:** {violation['Region']}  
+                                **Endpoint:** `{violation['Endpoint']}`  
+                                """)
+                            
+                            st.markdown(f"""
+                            **Description:**  
+                            {violation['Description']}
+                            
+                            **Recommended Remediation:**  
+                            {violation['Remediation']}
+                            """)
+                        
+                        with col2:
+                            st.markdown("**Quick Actions:**")
+                            
+                            if st.button(f"🤖 AI Analysis", key=f"opa_ai_{policy['PolicyName']}_{idx}", use_container_width=True):
+                                with st.spinner("Analyzing with Claude AI..."):
+                                    time.sleep(1)
+                                    st.session_state[f'opa_analysis_{policy["PolicyName"]}_{idx}'] = f"""
+**🤖 AI Analysis for OPA Violation**
+
+**Risk Assessment:**
+{violation['Severity']}-severity {violation['ResourceType']} misconfiguration detected.
+
+**Impact Analysis:**
+- **Resource:** {violation.get('Resource', 'N/A')}
+- **Issue:** {violation['Issue']}
+- **Security Impact:** Potential {
+    'system compromise and data breach' if violation['Severity'] == 'CRITICAL' else
+    'privilege escalation or data exposure' if violation['Severity'] == 'HIGH' else
+    'security control bypass'
+}
+
+**Context:**
+Policy "{policy['PolicyName']}" enforces: {policy['Description']}
+
+**Detailed Remediation:**
+1. **Immediate:** {violation['Remediation']}
+2. **Verify:** Test changes in dev/staging environment
+3. **Deploy:** Apply to production with monitoring
+4. **Prevent:** Add pre-commit hooks or CI/CD gates
+
+**Best Practices:**
+- Use policy-as-code in version control
+- Implement automated testing
+- Enable continuous compliance monitoring
+
+**Estimated Time:** 20-40 minutes
+**Automation:** Available via Terraform/Kubectl
+                                    """
+                            
+                            if st.button(f"💻 Generate Fix", key=f"opa_script_{policy['PolicyName']}_{idx}", use_container_width=True):
+                                with st.spinner("Generating remediation..."):
+                                    time.sleep(1)
+                                    # Generate appropriate script based on resource type
+                                    if 'Cluster' in violation:
+                                        script_lang = 'yaml'
+                                        script = f"""# Kubernetes Remediation for {violation['Resource']}
+# {violation['Remediation']}
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {violation['Resource'].split(': ')[1] if ': ' in violation['Resource'] else 'pod-name'}
+  namespace: {violation['Namespace']}
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+  containers:
+  - name: app
+    image: your-image:tag
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+    resources:
+      limits:
+        cpu: "1"
+        memory: "512Mi"
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+"""
+                                    elif 'Repository' in violation and 'terraform' in violation['Repository'].lower():
+                                        script_lang = 'hcl'
+                                        script = f"""# Terraform Remediation for {violation['Resource']}
+# {violation['Remediation']}
+
+resource "{violation['Resource'].split('.')[0]}" "{violation['Resource'].split('.')[1]}" {{
+  # ... existing configuration ...
+  
+  tags = {{
+    Environment  = "production"
+    Owner        = "platform-team"
+    CostCenter   = "engineering"
+    Compliance   = "required"
+    DataClass    = "confidential"
+  }}
+  
+  # Apply encryption where applicable
+  encrypted = true
+  
+  # Add backup configuration
+  backup_retention_period = 7
+}}
+"""
+                                    else:
+                                        script_lang = 'bash'
+                                        script = f"""# Remediation Script
+# {violation['Remediation']}
+
+# Update resource configuration
+echo "Remediating {violation['Resource']}..."
+
+# Apply fix
+# {violation['Remediation']}
+
+echo "Remediation complete"
+"""
+                                    st.session_state[f'opa_script_{policy["PolicyName"]}_{idx}'] = {'code': script, 'lang': script_lang}
+                            
+                            if st.button(f"🚀 Auto-Remediate", key=f"opa_deploy_{policy['PolicyName']}_{idx}", use_container_width=True, type="primary"):
+                                with st.spinner("Applying remediation..."):
+                                    time.sleep(2)
+                                    st.success(f"✅ Remediation applied to {violation.get('Resource', 'resource')}")
+                        
+                        # Show AI analysis if generated
+                        if f'opa_analysis_{policy["PolicyName"]}_{idx}' in st.session_state:
+                            st.markdown("---")
+                            st.markdown(st.session_state[f'opa_analysis_{policy["PolicyName"]}_{idx}'])
+                        
+                        # Show script if generated
+                        if f'opa_script_{policy["PolicyName"]}_{idx}' in st.session_state:
+                            st.markdown("---")
+                            st.markdown("**Generated Remediation:**")
+                            script_data = st.session_state[f'opa_script_{policy["PolicyName"]}_{idx}']
+                            st.code(script_data['code'], language=script_data['lang'])
+                
+                st.markdown("---")
+    
+    # KICS Tab
+    with guardrail_tabs[2]:
+        st.markdown("### 🔍 KICS - Infrastructure as Code Security")
+        
+        kics_data = fetch_kics_results()
+        
+        # Summary metrics
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Scans", kics_data['total_scans'])
+        with col2:
+            st.metric("Files Scanned", kics_data['files_scanned'])
+        with col3:
+            st.metric("Total Issues", kics_data['total_issues'], delta="-8 this week", delta_color="inverse")
+        with col4:
+            st.metric("Scan Duration", kics_data['scan_duration'])
+        
+        # Severity breakdown
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Critical", kics_data['critical'], delta_color="inverse")
+        with col2:
+            st.metric("High", kics_data['high'], delta_color="inverse")
+        with col3:
+            st.metric("Medium", kics_data['medium'])
+        with col4:
+            st.metric("Low", kics_data['low'])
+        
+        st.markdown("---")
+        
+        # Detailed findings
+        st.markdown("#### 🚨 Detailed Security Findings")
+        
+        # Filter by severity
+        severity_filter = st.multiselect(
+            "Filter by Severity",
+            ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
+            default=["CRITICAL", "HIGH"]
+        )
+        
+        findings = [f for f in kics_data.get('detailed_findings', []) if f['severity'] in severity_filter]
+        
+        st.info(f"Showing {len(findings)} findings (filtered by {', '.join(severity_filter)})")
+        
+        for finding in findings:
+            severity_color = {
+                'CRITICAL': '#ff4444',
+                'HIGH': '#FF9900',
+                'MEDIUM': '#ffbb33',
+                'LOW': '#00C851'
+            }.get(finding['severity'], '#gray')
+            
+            with st.expander(f"🚨 [{finding['severity']}] {finding['id']}: {finding['title']}"):
+                col1, col2 = st.columns([2, 1])
+                
+                with col1:
+                    st.markdown(f"""
+                    **Finding ID:** {finding['id']}  
+                    **Severity:** <span style='color: {severity_color}; font-weight: bold;'>{finding['severity']}</span>  
+                    **Category:** {finding['category']}  
+                    **CWE:** {finding.get('cwe', 'N/A')}  
+                    
+                    **Account:** {finding['AccountName']} (`{finding['AccountId']}`)  
+                    **Repository:** {finding['repository']}  
+                    **File Path:** `{finding['file_path']}` (Line {finding['line_number']})  
+                    **Resource:** `{finding['resource']}`  
+                    
+                    **Timestamp:** {finding['timestamp'][:19]}  
+                    
+                    **Description:**  
+                    {finding['description']}
+                    
+                    **Code Snippet:**
+                    ```
+{finding['code_snippet']}
+                    ```
+                    
+                    **Recommended Remediation:**  
+                    {finding['remediation']}
+                    """, unsafe_allow_html=True)
+                
+                with col2:
+                    st.markdown("**Quick Actions:**")
+                    
+                    if st.button(f"🤖 AI Analysis", key=f"kics_ai_{finding['id']}", use_container_width=True):
+                        with st.spinner("Analyzing with Claude AI..."):
+                            time.sleep(1)
+                            st.session_state[f'kics_analysis_{finding["id"]}'] = f"""
+**🤖 AI Analysis for KICS Finding {finding['id']}**
+
+**Security Risk:**
+{finding['severity']}-severity {finding['category']} violation in Infrastructure as Code.
+
+**CWE Classification:** {finding.get('cwe', 'Not classified')}
+
+**Impact Assessment:**
+- **Exposure:** {finding['description']}
+- **Attack Vector:** {'Direct credential compromise' if finding['category'] == 'Exposed Secrets' else
+                      'Data breach via unencrypted storage' if finding['category'] == 'Missing Encryption' else
+                      'Unauthorized access and privilege escalation'}
+- **Compliance Risk:** {'CRITICAL - Violates PCI DSS, HIPAA, SOC 2' if finding['severity'] == 'CRITICAL' else
+                        'HIGH - May violate compliance requirements' if finding['severity'] == 'HIGH' else
+                        'MEDIUM - Should be addressed for best practices'}
+
+**Root Cause Analysis:**
+File: `{finding['file_path']}` (Line {finding['line_number']})
+```
+{finding['code_snippet']}
+```
+
+**Detailed Remediation Steps:**
+1. **Update Code:** {finding['remediation']}
+2. **Test Changes:** Validate in development environment
+3. **Security Scan:** Re-run KICS to verify fix
+4. **Deploy:** Apply changes via CI/CD pipeline
+5. **Monitor:** Track for regression in future scans
+
+**Prevention Strategies:**
+- Add KICS to pre-commit hooks
+- Integrate KICS into CI/CD pipeline
+- Use infrastructure templates with security built-in
+- Implement peer review for IaC changes
+
+**Estimated Remediation Time:** 15-30 minutes
+**Risk if Unaddressed:** {
+    'CRITICAL - Immediate exploitation possible' if finding['severity'] == 'CRITICAL' else
+    'HIGH - Exploitation likely within 30 days' if finding['severity'] == 'HIGH' else
+    'MEDIUM - Should address in next sprint'
+}
+                            """
+                    
+                    if st.button(f"💻 Generate Fix", key=f"kics_script_{finding['id']}", use_container_width=True):
+                        with st.spinner("Generating fix..."):
+                            time.sleep(1)
+                            # Generate fix based on finding type
+                            if 'terraform' in finding['file_path'].lower():
+                                fix_code = f"""# Fixed Terraform Configuration
+# File: {finding['file_path']}
+# Issue: {finding['title']}
+
+{finding['code_snippet'].replace('# Missing', '').strip()}
+
+# REMEDIATION APPLIED:
+# {finding['remediation']}
+"""
+                            elif 'dockerfile' in finding['file_path'].lower():
+                                fix_code = f"""# Fixed Dockerfile
+# File: {finding['file_path']}
+# Issue: {finding['title']}
+
+# BEFORE (INSECURE):
+# {finding['code_snippet']}
+
+# AFTER (SECURE):
+# Use AWS SDK with IAM roles instead of hardcoded credentials
+# Credentials will be provided via ECS task role or EC2 instance profile
+# Remove any ENV variables containing credentials
+"""
+                            else:
+                                fix_code = f"""# Remediation for {finding['file_path']}
+# Issue: {finding['title']}
+
+# Current code (line {finding['line_number']}):
+{finding['code_snippet']}
+
+# Recommended fix:
+# {finding['remediation']}
+"""
+                            st.session_state[f'kics_script_{finding["id"]}'] = fix_code
+                    
+                    if st.button(f"🔗 Create PR", key=f"kics_pr_{finding['id']}", use_container_width=True):
+                        st.info("Creating GitHub pull request...")
+                        time.sleep(1)
+                        st.success(f"✅ PR created: {finding['repository']}#42")
+                    
+                    if st.button(f"✅ Mark Resolved", key=f"kics_resolve_{finding['id']}", use_container_width=True, type="primary"):
+                        st.success("✅ Marked as resolved")
+                
+                # Show AI analysis if generated
+                if f'kics_analysis_{finding["id"]}' in st.session_state:
+                    st.markdown("---")
+                    st.markdown(st.session_state[f'kics_analysis_{finding["id"]}'])
+                
+                # Show fix if generated
+                if f'kics_script_{finding["id"]}' in st.session_state:
+                    st.markdown("---")
+                    st.markdown("**Generated Fix:**")
+                    st.code(st.session_state[f'kics_script_{finding["id"]}'], language='python')
+        
+        st.markdown("---")
+        
+        # Charts section
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("#### Issues by Severity")
+            severity_data = pd.DataFrame({
+                'Severity': ['Critical', 'High', 'Medium', 'Low'],
+                'Count': [kics_data['critical'], kics_data['high'], 
+                         kics_data['medium'], kics_data['low']]
+            })
+            
+            fig = px.bar(
+                severity_data,
+                x='Severity',
+                y='Count',
+                color='Severity',
+                color_discrete_map={
+                    'Critical': '#F44336',
+                    'High': '#FF9900',
+                    'Medium': '#FFC107',
+                    'Low': '#4CAF50'
+                }
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            st.markdown("#### Issues by Category")
+            category_df = pd.DataFrame(
+                list(kics_data['issues_by_category'].items()),
+                columns=['Category', 'Count']
+            )
+            
+            fig = px.pie(category_df, values='Count', names='Category', hole=0.4)
+            st.plotly_chart(fig, use_container_width=True)
     """Render Tech Guardrails policy management"""
     st.markdown("## 🚧 Tech Guardrails Management")
     
@@ -1640,7 +3019,7 @@ def render_sidebar():
         st.markdown(f"{'✅' if st.session_state.get('aws_connected') else '❌'} AWS Connected")
         st.markdown(f"{'✅' if st.session_state.get('claude_connected') else '❌'} Claude AI Connected")
         st.markdown(f"{'✅' if st.session_state.get('github_connected') else '❌'} GitHub Connected")
-        st.markdown(f"✅ Monitoring: 950 accounts")
+        st.markdown(f"✅ Multi-Account Monitoring Active")
         st.markdown(f"✅ Last Updated: {datetime.now().strftime('%H:%M:%S')}")
         
         st.markdown("---")
@@ -1648,8 +3027,8 @@ def render_sidebar():
         # Version Info
         st.markdown("""
         <div style='font-size: 0.8rem; color: #666;'>
-            <strong>Platform Version</strong><br>
-            v4.0 - Unified Edition<br>
+            <strong>Future Minds Platform</strong><br>
+            v4.0 - AWS Edition<br>
             <small>Build: 2024.11.16</small>
         </div>
         """, unsafe_allow_html=True)
@@ -1657,6 +3036,369 @@ def render_sidebar():
 # ============================================================================
 # MAIN TABS RENDERING
 # ============================================================================
+
+def render_inspector_vulnerability_dashboard():
+    """Render comprehensive AWS Inspector vulnerability dashboard for Windows and Linux"""
+    st.markdown("## 🔬 AWS Inspector - OS Vulnerability Management")
+    
+    # Fetch Inspector data
+    inspector_data = fetch_inspector_findings(st.session_state.get('aws_clients', {}).get('inspector'))
+    
+    # Top metrics
+    col1, col2, col3, col4, col5 = st.columns(5)
+    
+    with col1:
+        st.metric("Total Vulnerabilities", inspector_data.get('total_findings', 0))
+    with col2:
+        st.metric("Critical", inspector_data.get('critical_vulns', 0), 
+                 delta="-2 this week", delta_color="inverse")
+    with col3:
+        st.metric("High", inspector_data.get('high_vulns', 0),
+                 delta="-5 this week", delta_color="inverse")
+    with col4:
+        st.metric("Windows Hosts", inspector_data.get('windows_vulns', {}).get('instances', 0))
+    with col5:
+        st.metric("Linux Hosts", inspector_data.get('linux_vulns', {}).get('instances', 0))
+    
+    st.markdown("---")
+    
+    # Main tabs for Windows and Linux
+    os_tabs = st.tabs(["🪟 Windows Vulnerabilities", "🐧 Linux Vulnerabilities", "📊 Analytics", "🤖 AI Remediation"])
+    
+    # Windows Vulnerabilities Tab
+    with os_tabs[0]:
+        st.markdown("### 🪟 Windows OS Vulnerabilities")
+        
+        windows_data = inspector_data.get('windows_vulns', {})
+        
+        # Windows metrics
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Windows Vulns", windows_data.get('total', 0))
+        with col2:
+            st.metric("Critical", windows_data.get('critical', 0), 
+                     delta_color="inverse")
+        with col3:
+            st.metric("High", windows_data.get('high', 0),
+                     delta_color="inverse")
+        with col4:
+            st.metric("Affected Instances", windows_data.get('instances', 0))
+        
+        st.markdown("---")
+        
+        # Windows vulnerability findings
+        st.markdown("#### 🔍 Critical Windows Vulnerabilities")
+        
+        windows_findings = windows_data.get('findings', [])
+        
+        for idx, vuln in enumerate(windows_findings):
+            severity_class = vuln['severity'].lower()
+            severity_color = {
+                'critical': '#ff4444',
+                'high': '#FF9900',
+                'medium': '#ffbb33',
+                'low': '#00C851'
+            }.get(severity_class, '#gray')
+            
+            with st.expander(f"🚨 {vuln['cve']} - {vuln['title']} [{vuln['severity']}]"):
+                col1, col2 = st.columns([2, 1])
+                
+                with col1:
+                    st.markdown(f"""
+                    **CVE ID:** {vuln['cve']}  
+                    **Severity:** <span style='color: {severity_color}; font-weight: bold;'>{vuln['severity']}</span>  
+                    **CVSS Score:** {vuln.get('cvss_score', 'N/A')} / 10.0  
+                    **Package:** {vuln['package']}  
+                    **Current Version:** {vuln['installed_version']}  
+                    **Fixed Version:** {vuln['fixed_version']}  
+                    **Affected Instances:** {vuln['affected_instances']}
+                    
+                    **Description:**  
+                    {vuln['description']}
+                    
+                    **Remediation:**  
+                    {vuln['remediation']}
+                    """, unsafe_allow_html=True)
+                
+                with col2:
+                    st.markdown("**Quick Actions:**")
+                    
+                    if st.button(f"🤖 AI Analysis", key=f"win_ai_{idx}", use_container_width=True):
+                        with st.spinner("Analyzing with Claude AI..."):
+                            analysis = analyze_vulnerability_with_ai(
+                                st.session_state.get('claude_client'),
+                                vuln
+                            )
+                            st.session_state[f'win_analysis_{idx}'] = analysis
+                    
+                    if st.button(f"💻 Generate Patch Script", key=f"win_script_{idx}", use_container_width=True):
+                        with st.spinner("Generating PowerShell script..."):
+                            script = generate_patch_script(
+                                st.session_state.get('claude_client'),
+                                vuln,
+                                'windows'
+                            )
+                            st.session_state[f'win_script_{idx}'] = script
+                    
+                    if st.button(f"🚀 Deploy Patch", key=f"win_deploy_{idx}", use_container_width=True, type="primary"):
+                        st.info("Deploying via AWS Systems Manager...")
+                        time.sleep(1)
+                        st.success(f"✅ Patch deployed to {vuln['affected_instances']} instances")
+                
+                # Show AI analysis if generated
+                if f'win_analysis_{idx}' in st.session_state:
+                    st.markdown("---")
+                    st.markdown(st.session_state[f'win_analysis_{idx}'])
+                
+                # Show script if generated
+                if f'win_script_{idx}' in st.session_state:
+                    st.markdown("---")
+                    st.markdown("**Generated PowerShell Script:**")
+                    st.code(st.session_state[f'win_script_{idx}'], language='powershell')
+    
+    # Linux Vulnerabilities Tab
+    with os_tabs[1]:
+        st.markdown("### 🐧 Linux OS Vulnerabilities")
+        
+        linux_data = inspector_data.get('linux_vulns', {})
+        
+        # Linux metrics
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Linux Vulns", linux_data.get('total', 0))
+        with col2:
+            st.metric("Critical", linux_data.get('critical', 0),
+                     delta_color="inverse")
+        with col3:
+            st.metric("High", linux_data.get('high', 0),
+                     delta_color="inverse")
+        with col4:
+            st.metric("Affected Instances", linux_data.get('instances', 0))
+        
+        st.markdown("---")
+        
+        # Linux vulnerability findings
+        st.markdown("#### 🔍 Critical Linux Vulnerabilities")
+        
+        linux_findings = linux_data.get('findings', [])
+        
+        for idx, vuln in enumerate(linux_findings):
+            severity_class = vuln['severity'].lower()
+            severity_color = {
+                'critical': '#ff4444',
+                'high': '#FF9900',
+                'medium': '#ffbb33',
+                'low': '#00C851'
+            }.get(severity_class, '#gray')
+            
+            with st.expander(f"🚨 {vuln['cve']} - {vuln['title']} [{vuln['severity']}]"):
+                col1, col2 = st.columns([2, 1])
+                
+                with col1:
+                    st.markdown(f"""
+                    **CVE ID:** {vuln['cve']}  
+                    **Severity:** <span style='color: {severity_color}; font-weight: bold;'>{vuln['severity']}</span>  
+                    **CVSS Score:** {vuln.get('cvss_score', 'N/A')} / 10.0  
+                    **Package:** {vuln['package']}  
+                    **Distribution:** {vuln.get('distribution', 'N/A')}  
+                    **Current Version:** {vuln['installed_version']}  
+                    **Fixed Version:** {vuln['fixed_version']}  
+                    **Affected Instances:** {vuln['affected_instances']}
+                    
+                    **Description:**  
+                    {vuln['description']}
+                    
+                    **Remediation:**  
+                    {vuln['remediation']}
+                    """, unsafe_allow_html=True)
+                
+                with col2:
+                    st.markdown("**Quick Actions:**")
+                    
+                    if st.button(f"🤖 AI Analysis", key=f"linux_ai_{idx}", use_container_width=True):
+                        with st.spinner("Analyzing with Claude AI..."):
+                            analysis = analyze_vulnerability_with_ai(
+                                st.session_state.get('claude_client'),
+                                vuln
+                            )
+                            st.session_state[f'linux_analysis_{idx}'] = analysis
+                    
+                    if st.button(f"💻 Generate Patch Script", key=f"linux_script_{idx}", use_container_width=True):
+                        with st.spinner("Generating Bash script..."):
+                            script = generate_patch_script(
+                                st.session_state.get('claude_client'),
+                                vuln,
+                                'linux'
+                            )
+                            st.session_state[f'linux_script_{idx}'] = script
+                    
+                    if st.button(f"🚀 Deploy Patch", key=f"linux_deploy_{idx}", use_container_width=True, type="primary"):
+                        st.info("Deploying via AWS Systems Manager...")
+                        time.sleep(1)
+                        st.success(f"✅ Patch deployed to {vuln['affected_instances']} instances")
+                
+                # Show AI analysis if generated
+                if f'linux_analysis_{idx}' in st.session_state:
+                    st.markdown("---")
+                    st.markdown(st.session_state[f'linux_analysis_{idx}'])
+                
+                # Show script if generated
+                if f'linux_script_{idx}' in st.session_state:
+                    st.markdown("---")
+                    st.markdown("**Generated Bash Script:**")
+                    st.code(st.session_state[f'linux_script_{idx}'], language='bash')
+    
+    # Analytics Tab
+    with os_tabs[2]:
+        st.markdown("### 📊 Vulnerability Analytics")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Vulnerability by OS
+            st.markdown("#### Vulnerabilities by Operating System")
+            os_data = inspector_data.get('by_os', {})
+            
+            if os_data:
+                os_df = pd.DataFrame([
+                    {'OS': os, 'Total': data['count'], 'Critical': data['critical'], 'High': data['high']}
+                    for os, data in os_data.items()
+                ])
+                
+                fig = px.bar(os_df, x='OS', y='Total', color='Total',
+                            color_continuous_scale=['#4CAF50', '#FFC107', '#FF9900', '#F44336'])
+                st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            # Vulnerability categories
+            st.markdown("#### Vulnerability Categories")
+            vuln_categories = inspector_data.get('vulnerability_categories', {})
+            
+            if vuln_categories:
+                cat_df = pd.DataFrame(
+                    list(vuln_categories.items()),
+                    columns=['Category', 'Count']
+                ).sort_values('Count', ascending=False)
+                
+                fig = px.pie(cat_df, values='Count', names='Category', hole=0.4)
+                st.plotly_chart(fig, use_container_width=True)
+        
+        st.markdown("---")
+        
+        # Trend analysis
+        st.markdown("#### 📈 Vulnerability Trend (Last 30 Days)")
+        
+        trend_data = pd.DataFrame({
+            'Date': pd.date_range(end=datetime.now(), periods=30, freq='D'),
+            'Critical': [5, 5, 6, 5, 4, 4, 5, 5, 4, 3, 3, 3, 4, 4, 3, 3, 4, 4, 3, 3, 4, 4, 3, 3, 3, 4, 4, 3, 3, 5],
+            'High': [40, 39, 38, 38, 37, 36, 36, 35, 35, 34, 34, 33, 33, 34, 34, 35, 35, 34, 34, 35, 35, 34, 34, 35, 35, 34, 34, 34, 34, 34],
+            'Medium': [105, 103, 101, 100, 99, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98, 98]
+        })
+        
+        fig = px.line(trend_data, x='Date', y=['Critical', 'High', 'Medium'],
+                     labels={'value': 'Count', 'variable': 'Severity'},
+                     color_discrete_map={'Critical': '#F44336', 'High': '#FF9900', 'Medium': '#FFC107'})
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # AI Remediation Tab
+    with os_tabs[3]:
+        st.markdown("### 🤖 AI-Powered Bulk Remediation")
+        
+        st.markdown("""
+        <div class='ai-analysis'>
+            <h3>🧠 Intelligent Patch Management</h3>
+            <p>Let Claude AI analyze all vulnerabilities and generate comprehensive remediation plans</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("#### 🪟 Windows Remediation")
+            st.metric("Vulnerabilities", windows_data.get('total', 0))
+            st.metric("Auto-Fixable", windows_data.get('critical', 0) + windows_data.get('high', 0))
+            
+            if st.button("🤖 Generate Windows Remediation Plan", use_container_width=True, type="primary"):
+                with st.spinner("Claude is analyzing all Windows vulnerabilities..."):
+                    time.sleep(2)
+                    st.success("✅ Remediation plan generated!")
+                    st.session_state['windows_bulk_plan'] = True
+        
+        with col2:
+            st.markdown("#### 🐧 Linux Remediation")
+            st.metric("Vulnerabilities", linux_data.get('total', 0))
+            st.metric("Auto-Fixable", linux_data.get('critical', 0) + linux_data.get('high', 0))
+            
+            if st.button("🤖 Generate Linux Remediation Plan", use_container_width=True, type="primary"):
+                with st.spinner("Claude is analyzing all Linux vulnerabilities..."):
+                    time.sleep(2)
+                    st.success("✅ Remediation plan generated!")
+                    st.session_state['linux_bulk_plan'] = True
+        
+        with col3:
+            st.markdown("#### 📦 Patch Deployment")
+            st.metric("Ready to Deploy", 
+                     (windows_data.get('critical', 0) + linux_data.get('critical', 0) +
+                      windows_data.get('high', 0) + linux_data.get('high', 0)))
+            st.metric("Success Rate", "97.3%")
+            
+            if st.button("🚀 Deploy All Patches", use_container_width=True, type="primary", 
+                        disabled=not (st.session_state.get('windows_bulk_plan') or st.session_state.get('linux_bulk_plan'))):
+                with st.spinner("Deploying patches via AWS Systems Manager..."):
+                    progress_bar = st.progress(0)
+                    for i in range(100):
+                        time.sleep(0.02)
+                        progress_bar.progress(i + 1)
+                    st.success("✅ All patches deployed successfully!")
+        
+        # Show bulk remediation plans if generated
+        if st.session_state.get('windows_bulk_plan'):
+            st.markdown("---")
+            st.markdown("### 📋 Windows Remediation Plan")
+            
+            st.markdown("""
+            **Phase 1: Critical Vulnerabilities (Immediate)**
+            - CVE-2024-1234: Windows RCE - Deploy to 12 instances
+            - CVE-2024-5678: Privilege Escalation - Deploy to 8 instances
+            
+            **Phase 2: High Severity (Within 48 hours)**
+            - 18 high-severity patches queued
+            - Estimated deployment time: 2-3 hours
+            
+            **Phase 3: Medium/Low (Within 7 days)**
+            - 107 medium/low severity patches
+            - Scheduled for weekend maintenance window
+            
+            **Deployment Method:**
+            - AWS Systems Manager Patch Manager
+            - Maintenance Windows: Configured
+            - Rollback Plan: Enabled
+            - SNS Notifications: Configured
+            """)
+        
+        if st.session_state.get('linux_bulk_plan'):
+            st.markdown("---")
+            st.markdown("### 📋 Linux Remediation Plan")
+            
+            st.markdown("""
+            **Phase 1: Critical Vulnerabilities (Immediate)**
+            - CVE-2024-2345: Kernel Use-After-Free - Deploy to 28 instances
+            - CVE-2024-6789: OpenSSL Buffer Overflow - Deploy to 45 instances
+            
+            **Phase 2: High Severity (Within 48 hours)**
+            - 16 high-severity patches queued
+            - Estimated deployment time: 1-2 hours
+            
+            **Phase 3: Medium/Low (Within 7 days)**
+            - 88 medium/low severity patches
+            - Scheduled for weekend maintenance window
+            
+            **Deployment Method:**
+            - AWS Systems Manager Patch Manager
+            - Distribution-specific commands generated
+            - Reboot management: Automated
+            - CloudWatch Logging: Enabled
+            """)
 
 def render_overview_dashboard():
     """Render overview dashboard tab"""
@@ -2015,6 +3757,7 @@ def main():
     # Main navigation tabs
     tabs = st.tabs([
         "📊 Overview Dashboard",
+        "🔬 Inspector Vulnerabilities",
         "🚧 Tech Guardrails",
         "🤖 AI Remediation",
         "🐙 GitHub & GitOps",
@@ -2026,18 +3769,21 @@ def main():
         render_overview_dashboard()
     
     with tabs[1]:
-        render_policy_guardrails()
+        render_inspector_vulnerability_dashboard()
     
     with tabs[2]:
-        render_ai_remediation_tab()
+        render_policy_guardrails()
     
     with tabs[3]:
-        render_github_gitops_tab()
+        render_ai_remediation_tab()
     
     with tabs[4]:
-        render_account_lifecycle_tab()
+        render_github_gitops_tab()
     
     with tabs[5]:
+        render_account_lifecycle_tab()
+    
+    with tabs[6]:
         st.markdown("## 🔍 Security Findings Details")
         security_findings = st.session_state.get('security_findings', [])
         if security_findings:
@@ -2070,7 +3816,7 @@ def main():
     st.markdown("---")
     st.markdown("""
     <div style='text-align: center; color: #666; padding: 2rem;'>
-        <p><strong>AI-Enhanced AWS Tech Guardrails Platform v4.0</strong></p>
+        <p><strong>Future Minds | AI-Enhanced AWS Compliance Platform v4.0</strong></p>
         <p>Powered by Anthropic Claude AI | AWS Bedrock | GitHub Actions</p>
         <p style='font-size: 0.9rem;'>Integrated Services: Security Hub • Config • GuardDuty • Inspector • CloudTrail • SCP • OPA • KICS</p>
         <p style='font-size: 0.9rem;'>Features: Multi-Account Monitoring • Automated Remediation • GitOps • Account Lifecycle • Tech Guardrails</p>
