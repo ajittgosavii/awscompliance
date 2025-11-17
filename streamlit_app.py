@@ -849,15 +849,19 @@ def fetch_inspector_findings(client) -> Dict[str, Any]:
             # Method 2: Check package vulnerability details
             if 'packageVulnerabilityDetails' in finding:
                 vuln_details = finding['packageVulnerabilityDetails']
-                vuln_package = vuln_details.get('vulnerablePackages', [{}])[0]
-                package_name = vuln_package.get('name', '').lower()
+                vulnerable_packages = vuln_details.get('vulnerablePackages', [])
                 
-                # Windows package indicators
-                if any(x in package_name for x in ['windows', 'microsoft', 'dotnet', 'iis']):
-                    is_windows = True
-                # Linux package indicators
-                elif any(x in package_name for x in ['linux', 'ubuntu', 'debian', 'centos', 'rhel', 'kernel']):
-                    is_linux = True
+                # Check if list is not empty before accessing
+                if vulnerable_packages and len(vulnerable_packages) > 0:
+                    vuln_package = vulnerable_packages[0]
+                    package_name = vuln_package.get('name', '').lower()
+                    
+                    # Windows package indicators
+                    if any(x in package_name for x in ['windows', 'microsoft', 'dotnet', 'iis']):
+                        is_windows = True
+                    # Linux package indicators
+                    elif any(x in package_name for x in ['linux', 'ubuntu', 'debian', 'centos', 'rhel', 'kernel']):
+                        is_linux = True
             
             # Create finding entry with safe field access
             finding_entry = {
@@ -884,8 +888,11 @@ def fetch_inspector_findings(client) -> Dict[str, Any]:
             # Add package details if available
             if 'packageVulnerabilityDetails' in finding:
                 vuln_details = finding['packageVulnerabilityDetails']
-                if vuln_details.get('vulnerablePackages'):
-                    vuln_package = vuln_details['vulnerablePackages'][0]
+                vulnerable_packages = vuln_details.get('vulnerablePackages', [])
+                
+                # Check if list has items before accessing
+                if vulnerable_packages and len(vulnerable_packages) > 0:
+                    vuln_package = vulnerable_packages[0]
                     finding_entry['package'] = vuln_package.get('name', 'N/A')
                     finding_entry['installed_version'] = vuln_package.get('version', 'N/A')
                     finding_entry['fixed_version'] = vuln_package.get('fixedInVersion', 'N/A')
