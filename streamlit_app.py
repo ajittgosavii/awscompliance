@@ -5485,8 +5485,14 @@ def main():
                 df = pd.DataFrame(demo_findings)
                 st.dataframe(df, use_container_width=True, hide_index=True)
             else:
-                # LIVE MODE - Show info message only (no demo data)
-                st.info("No security findings available. Connect to AWS to fetch findings.")
+                # LIVE MODE - Show appropriate message based on connection status
+                if st.session_state.get('aws_connected'):
+                    # Connected but no findings
+                    st.success("✅ Connected to AWS - No security findings found in your account.")
+                    st.info("This is good news! Your AWS environment has no active Security Hub findings.")
+                else:
+                    # Not connected
+                    st.info("No security findings available. Connect to AWS to fetch findings.")
                 
                 # Show empty dataframe structure for reference
                 empty_df = pd.DataFrame(columns=['ID', 'Title', 'Severity', 'Resource', 'Status'])
