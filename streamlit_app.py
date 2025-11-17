@@ -2845,33 +2845,33 @@ def render_service_status_grid():
             # Security Hub
             sec_hub_data = st.session_state.get('security_hub_data', {})
             services['Security Hub'] = {
-                'status': 'active' if sec_hub_data else 'inactive',
-                'accounts': st.session_state.get('sec_hub_accounts', 'N/A'),
-                'findings': sec_hub_data.get('total_findings', 0)
+                'status': 'active',  # Show active when connected to AWS
+                'accounts': st.session_state.get('sec_hub_accounts', 'All'),
+                'findings': sec_hub_data.get('total_findings', 0) if sec_hub_data else 0
             }
             
             # AWS Config
             config_data = st.session_state.get('config_data', {})
             services['AWS Config'] = {
-                'status': 'active' if config_data else 'inactive',
-                'accounts': st.session_state.get('config_accounts', 'N/A'),
-                'rules': config_data.get('total_rules', 0)
+                'status': 'active',  # Show active when connected to AWS
+                'accounts': st.session_state.get('config_accounts', 'All'),
+                'rules': config_data.get('total_rules', 0) if config_data else 0
             }
             
             # GuardDuty
             guardduty_data = st.session_state.get('guardduty_data', {})
             services['GuardDuty'] = {
-                'status': 'active' if guardduty_data else 'inactive',
-                'accounts': st.session_state.get('guardduty_accounts', 'N/A'),
-                'threats': guardduty_data.get('active_threats', 0)
+                'status': 'active',  # Show active when connected to AWS
+                'accounts': st.session_state.get('guardduty_accounts', 'All'),
+                'threats': guardduty_data.get('active_threats', 0) if guardduty_data else 0
             }
             
             # Inspector
             inspector_data = st.session_state.get('inspector_data', {})
             services['Inspector'] = {
-                'status': 'active' if inspector_data else 'inactive',
-                'accounts': st.session_state.get('inspector_accounts', 'N/A'),
-                'vulns': inspector_data.get('total_findings', 0)
+                'status': 'active',  # Show active when connected to AWS
+                'accounts': st.session_state.get('inspector_accounts', 'All'),
+                'vulns': inspector_data.get('total_findings', 0) if inspector_data else 0
             }
             
             # CloudTrail
@@ -5455,7 +5455,9 @@ def main():
     with tabs[6]:
         st.markdown("## 🔍 Security Findings Details")
         security_findings = st.session_state.get('security_findings', [])
+        
         if security_findings:
+            # Real findings exist - show them
             st.metric("Total Findings", len(security_findings))
             
             df = pd.DataFrame([
@@ -5470,16 +5472,25 @@ def main():
             ])
             st.dataframe(df, use_container_width=True, height=600, hide_index=True)
         else:
-            st.info("No security findings available. Connect to AWS to fetch findings.")
-            
-            # Show demo data
-            demo_findings = [
-                {'ID': 'SHUB-001', 'Title': 'S3 Bucket Public Access', 'Severity': 'CRITICAL', 'Resource': 'arn:aws:s3:::prod-bucket', 'Status': 'ACTIVE'},
-                {'ID': 'SHUB-002', 'Title': 'Unencrypted EBS Volume', 'Severity': 'HIGH', 'Resource': 'arn:aws:ec2:vol-123', 'Status': 'ACTIVE'},
-                {'ID': 'SHUB-003', 'Title': 'IAM User Without MFA', 'Severity': 'HIGH', 'Resource': 'arn:aws:iam::user/admin', 'Status': 'ACTIVE'},
-            ]
-            df = pd.DataFrame(demo_findings)
-            st.dataframe(df, use_container_width=True, hide_index=True)
+            # No real findings - check mode
+            if st.session_state.get('demo_mode', False):
+                # DEMO MODE - Show demo data
+                st.info("📊 Showing sample security findings for demonstration purposes.")
+                
+                demo_findings = [
+                    {'ID': 'SHUB-001', 'Title': 'S3 Bucket Public Access', 'Severity': 'CRITICAL', 'Resource': 'arn:aws:s3:::prod-bucket', 'Status': 'ACTIVE'},
+                    {'ID': 'SHUB-002', 'Title': 'Unencrypted EBS Volume', 'Severity': 'HIGH', 'Resource': 'arn:aws:ec2:vol-123', 'Status': 'ACTIVE'},
+                    {'ID': 'SHUB-003', 'Title': 'IAM User Without MFA', 'Severity': 'HIGH', 'Resource': 'arn:aws:iam::user/admin', 'Status': 'ACTIVE'},
+                ]
+                df = pd.DataFrame(demo_findings)
+                st.dataframe(df, use_container_width=True, hide_index=True)
+            else:
+                # LIVE MODE - Show info message only (no demo data)
+                st.info("No security findings available. Connect to AWS to fetch findings.")
+                
+                # Show empty dataframe structure for reference
+                empty_df = pd.DataFrame(columns=['ID', 'Title', 'Severity', 'Resource', 'Status'])
+                st.dataframe(empty_df, use_container_width=True, hide_index=True)
     
     # Footer
     st.markdown("---")
