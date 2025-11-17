@@ -507,8 +507,50 @@ def fetch_security_hub_findings(client) -> Dict[str, Any]:
             'findings': findings,
             **severity_counts
         }
+    except ClientError as e:
+        error_code = e.response['Error']['Code']
+        if error_code == 'InvalidAccessException':
+            st.warning("""
+            ⚠️ **AWS Security Hub: InvalidAccessException**
+            
+            **Possible causes:**
+            1. **Region Mismatch** - Security Hub is enabled in a different region
+               - Check your `.streamlit/secrets.toml` region setting
+               - Verify Security Hub is enabled in that specific region
+            2. Security Hub is not enabled in this account/region
+            
+            **Solutions:**
+            - **If using us-east-2:** Update secrets.toml region to "us-east-2"
+            - **To enable in current region:**
+              ```bash
+              aws securityhub enable-security-hub --region YOUR_REGION
+              ```
+            - **Verify Security Hub status:**
+              ```bash
+              aws securityhub get-enabled-standards --region YOUR_REGION
+              ```
+            """)
+        else:
+            st.error(f"Error fetching Security Hub findings: {str(e)}")
+        
+        # Return demo data when service is not available
+        return {
+            'total_findings': 0,
+            'critical': 0,
+            'high': 0,
+            'medium': 0,
+            'low': 0,
+            'findings_by_severity': {
+                'CRITICAL': 0,
+                'HIGH': 0,
+                'MEDIUM': 0,
+                'LOW': 0
+            },
+            'findings': [],
+            'service_status': 'NOT_ENABLED'
+        }
     except Exception as e:
-        st.error(f"Error fetching Security Hub findings: {str(e)}")
+        st.error(f"Unexpected error fetching Security Hub findings: {str(e)}")
         return {}
 
 def fetch_config_compliance(client) -> Dict[str, Any]:
@@ -3387,6 +3429,9 @@ def render_sidebar():
             has_github = "token" in st.secrets.get("github", {})
             
             st.markdown(f"{'✅' if has_aws else '❌'} AWS Credentials")
+            if has_aws:
+                current_region = st.secrets["aws"]["region"]
+                st.markdown(f"📍 **Region:** `{current_region}`")
             st.markdown(f"{'✅' if has_claude else '❌'} Claude AI API Key")
             st.markdown(f"{'✅' if has_github else '❌'} GitHub Token")
             
@@ -3428,7 +3473,7 @@ def render_sidebar():
             [aws]
             access_key_id = "YOUR_KEY"
             secret_access_key = "YOUR_SECRET"
-            region = "us-east-1"
+            region = "us-east-2"  # IMPORTANT: Must match where Security Hub is enabled
             
             [anthropic]
             api_key = "YOUR_CLAUDE_KEY"
@@ -3437,6 +3482,9 @@ def render_sidebar():
             token = "YOUR_TOKEN"
             repo = "org/repo"
             ```
+            
+            **Note:** Security Hub is a regional service. Ensure the region matches 
+            where you've enabled Security Hub in your AWS account.
             """)
         
         st.markdown("---")
