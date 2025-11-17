@@ -337,6 +337,7 @@ def initialize_session_state():
         'aws_connected': False,
         'claude_connected': False,
         'github_connected': False,
+        'demo_mode': False,  # 🆕 NEW: Demo/Live toggle
         'aws_clients': None,
         'claude_client': None,
         'github_client': None,
@@ -463,7 +464,11 @@ def get_github_client(token: str):
 
 def fetch_security_hub_findings(client) -> Dict[str, Any]:
     """Fetch Security Hub findings with comprehensive analysis"""
-    if not client:
+    def fetch_security_hub_findings(client) -> Dict[str, Any]:
+    """Fetch Security Hub findings with comprehensive analysis"""
+    
+    # 🆕 CHECK DEMO MODE FIRST
+    if st.session_state.get('demo_mode', False):
         return {
             'total_findings': 1247,
             'critical': 23,
@@ -487,7 +492,19 @@ def fetch_security_hub_findings(client) -> Dict[str, Any]:
             'auto_remediated': 342,
             'findings': []
         }
-    
+
+    if not client:
+        st.error("⚠️ AWS not connected. Enable Demo Mode or configure AWS credentials.")
+        return {
+            'total_findings': 0,
+            'critical': 0,
+            'high': 0,
+            'medium': 0,
+            'low': 0,
+            'findings_by_severity': {},
+            'compliance_standards': {},
+            'findings': []
+        }
     try:
         response = client.get_findings(
             Filters={'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}]},
@@ -576,7 +593,8 @@ def fetch_security_hub_findings(client) -> Dict[str, Any]:
 
 def fetch_config_compliance(client) -> Dict[str, Any]:
     """Fetch AWS Config compliance data"""
-    if not client:
+     # 🆕 CHECK DEMO MODE FIRST
+    if st.session_state.get('demo_mode', False):
         return {
             'compliance_rate': 91.3,
             'resources_evaluated': 8934,
@@ -587,6 +605,14 @@ def fetch_config_compliance(client) -> Dict[str, Any]:
             'NOT_APPLICABLE': 0
         }
     
+    if not client:
+        st.error("⚠️ AWS not connected. Enable Demo Mode or configure AWS credentials.")
+        return {
+            'compliance_rate': 0,
+            'resources_evaluated': 0,
+            'compliant': 0,
+            'non_compliant': 0
+        }
     try:
         response = client.describe_compliance_by_config_rule()
         compliance_data = response.get('ComplianceByConfigRules', [])
@@ -613,7 +639,8 @@ def fetch_config_compliance(client) -> Dict[str, Any]:
 
 def fetch_guardduty_findings(client) -> Dict[str, Any]:
     """Fetch GuardDuty threat findings"""
-    if not client:
+    # 🆕 CHECK DEMO MODE FIRST
+    if st.session_state.get('demo_mode', False):
         return {
             'total_findings': 89,
             'active_threats': 12,
@@ -623,6 +650,9 @@ def fetch_guardduty_findings(client) -> Dict[str, Any]:
             'low_severity': 58
         }
     
+    if not client:
+        st.error("⚠️ AWS not connected. Enable Demo Mode or configure AWS credentials.")
+        return {'total_findings': 0}
     try:
         detectors = client.list_detectors().get('DetectorIds', [])
         if not detectors:
@@ -642,7 +672,8 @@ def fetch_guardduty_findings(client) -> Dict[str, Any]:
 
 def fetch_inspector_findings(client) -> Dict[str, Any]:
     """Fetch Amazon Inspector vulnerability findings with OS-specific details"""
-    if not client:
+     # 🆕 CHECK DEMO MODE FIRST
+    if st.session_state.get('demo_mode', False):
         return {
             'total_findings': 234,
             'critical_vulns': 5,
@@ -667,33 +698,10 @@ def fetch_inspector_findings(client) -> Dict[str, Any]:
                         'installed_version': '10.0.17763',
                         'fixed_version': '10.0.17763.5830',
                         'affected_instances': 12,
-                        'description': 'A remote code execution vulnerability exists in Windows when the Windows Adobe Type Manager Library improperly handles specially-crafted OpenType fonts.',
+                        'description': 'A remote code execution vulnerability exists in Windows',
                         'remediation': 'Update Windows to latest patch level'
                     },
-                    {
-                        'cve': 'CVE-2024-5678',
-                        'title': 'Windows Privilege Escalation Vulnerability',
-                        'severity': 'HIGH',
-                        'cvss_score': 7.8,
-                        'package': 'Windows Server 2022',
-                        'installed_version': '10.0.20348',
-                        'fixed_version': '10.0.20348.2227',
-                        'affected_instances': 8,
-                        'description': 'An elevation of privilege vulnerability exists when the Windows kernel fails to properly handle objects in memory.',
-                        'remediation': 'Apply Windows security update KB5034768'
-                    },
-                    {
-                        'cve': 'CVE-2024-9012',
-                        'title': 'Windows IIS Information Disclosure',
-                        'severity': 'MEDIUM',
-                        'cvss_score': 5.3,
-                        'package': 'IIS 10.0',
-                        'installed_version': '10.0.17763',
-                        'fixed_version': '10.0.17763.5830',
-                        'affected_instances': 15,
-                        'description': 'An information disclosure vulnerability exists in IIS when it improperly handles requests.',
-                        'remediation': 'Update IIS to latest version and apply security patches'
-                    }
+                    # ... keep your other demo findings
                 ]
             },
             'linux_vulns': {
@@ -744,7 +752,7 @@ def fetch_inspector_findings(client) -> Dict[str, Any]:
                         'remediation': 'apt-get update && apt-get install apache2'
                     }
                 ]
-            },
+           },
             'by_os': {
                 'Windows Server 2019': {'count': 52, 'critical': 2, 'high': 8},
                 'Windows Server 2022': {'count': 76, 'critical': 1, 'high': 10},
@@ -763,6 +771,19 @@ def fetch_inspector_findings(client) -> Dict[str, Any]:
                 'Path Traversal': 11,
                 'Memory Corruption': 9
             }
+        }
+    
+    if not client:
+        st.error("⚠️ AWS not connected. Enable Demo Mode or configure AWS credentials.")
+        return {
+            'total_findings': 0,
+            'critical_vulns': 0,
+            'high_vulns': 0,
+            'medium_vulns': 0,
+            'low_vulns': 0,
+            'windows_vulns': {'total': 0, 'findings': []},
+            'linux_vulns': {'total': 0, 'findings': []},
+            'findings': []
         }
     
     try:
@@ -3636,6 +3657,38 @@ def render_sidebar():
     with st.sidebar:
         st.markdown("## ⚙️ Configuration")
         
+        # 🆕 DEMO/LIVE TOGGLE - PROMINENT PLACEMENT
+        st.markdown("### 🎮 Data Mode")
+        
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            demo_mode = st.toggle(
+                "Demo Mode",
+                value=st.session_state.get('demo_mode', False),
+                help="Toggle between Demo (sample data) and Live (real AWS data)"
+            )
+            st.session_state.demo_mode = demo_mode
+        
+        with col2:
+            if demo_mode:
+                st.markdown("**🟠 DEMO**")
+                st.caption("Sample data")
+            else:
+                st.markdown("**🟢 LIVE**")
+                st.caption("Real AWS data")
+        
+        # Visual indicator
+        if demo_mode:
+            st.warning("📊 Demo Mode: Showing sample data")
+        else:
+            if st.session_state.get('aws_connected'):
+                st.success("✅ Live Mode: Connected to AWS")
+            else:
+                st.error("❌ Live Mode: Not connected")
+        
+        st.markdown("---")
+        
         # Credentials Section
         st.markdown("### 🔐 Credentials")
         
@@ -3651,41 +3704,43 @@ def render_sidebar():
             st.markdown(f"{'✅' if has_claude else '❌'} Claude AI API Key")
             st.markdown(f"{'✅' if has_github else '❌'} GitHub Token")
             
-            # Auto-connect AWS
-            if has_aws and not st.session_state.get('aws_connected'):
-                with st.spinner("Connecting to AWS..."):
-                    clients = get_aws_clients(
-                        st.secrets["aws"]["access_key_id"],
-                        st.secrets["aws"]["secret_access_key"],
-                        st.secrets["aws"]["region"]
-                    )
-                    if clients:
-                        st.session_state.aws_clients = clients
-                        st.session_state.aws_connected = True
+            # 🆕 Only auto-connect if NOT in demo mode
+            if not demo_mode:
+                # Auto-connect AWS
+                if has_aws and not st.session_state.get('aws_connected'):
+                    with st.spinner("Connecting to AWS..."):
+                        clients = get_aws_clients(
+                            st.secrets["aws"]["access_key_id"],
+                            st.secrets["aws"]["secret_access_key"],
+                            st.secrets["aws"]["region"]
+                        )
+                        if clients:
+                            st.session_state.aws_clients = clients
+                            st.session_state.aws_connected = True
+                            st.rerun()
+                
+                # Auto-connect Claude
+                if has_claude and not st.session_state.get('claude_connected'):
+                    client = get_claude_client(st.secrets["anthropic"]["api_key"])
+                    if client:
+                        st.session_state.claude_client = client
+                        st.session_state.claude_connected = True
                         st.rerun()
-            
-            # Auto-connect Claude
-            if has_claude and not st.session_state.get('claude_connected'):
-                client = get_claude_client(st.secrets["anthropic"]["api_key"])
-                if client:
-                    st.session_state.claude_client = client
-                    st.session_state.claude_connected = True
-                    st.rerun()
-            
-            # Auto-connect GitHub
-            if has_github and not st.session_state.get('github_connected'):
-                github_client = get_github_client(st.secrets["github"]["token"])
-                if github_client:
-                    st.session_state.github_client = github_client
-                    st.session_state.github_repo = st.secrets["github"].get("repo", "")
-                    st.session_state.github_connected = True
-                    st.rerun()
+                
+                # Auto-connect GitHub
+                if has_github and not st.session_state.get('github_connected'):
+                    github_client = get_github_client(st.secrets["github"]["token"])
+                    if github_client:
+                        st.session_state.github_client = github_client
+                        st.session_state.github_repo = st.secrets["github"].get("repo", "")
+                        st.session_state.github_connected = True
+                        st.rerun()
         
         except Exception as e:
-            st.error("⚠️ Configure secrets.toml file")
-            st.info("""
-            Create `.streamlit/secrets.toml`:
-            ```
+            if not demo_mode:
+                st.error("⚠️ Configure secrets.toml file")
+                st.info("""
+                Create `.streamlit/secrets.toml`:
             [aws]
             access_key_id = "YOUR_KEY"
             secret_access_key = "YOUR_SECRET"
@@ -4910,6 +4965,52 @@ def render_account_lifecycle_tab():
             
             df = pd.DataFrame(account_data)
             st.dataframe(df, use_container_width=True, hide_index=True)
+def render_mode_banner():
+    """Render a prominent banner showing current mode"""
+    if st.session_state.get('demo_mode', False):
+        st.markdown("""
+        <div style='background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); 
+                    padding: 1rem; 
+                    border-radius: 10px; 
+                    text-align: center; 
+                    margin-bottom: 1rem;
+                    border: 3px solid #E65100;'>
+            <h3 style='color: white; margin: 0;'>🟠 DEMO MODE ACTIVE</h3>
+            <p style='color: white; margin: 0.5rem 0 0 0;'>
+                You are viewing <strong>sample demonstration data</strong>. 
+                Switch to Live Mode in the sidebar to see your real AWS data.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        if st.session_state.get('aws_connected'):
+            st.markdown("""
+            <div style='background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); 
+                        padding: 1rem; 
+                        border-radius: 10px; 
+                        text-align: center; 
+                        margin-bottom: 1rem;
+                        border: 3px solid #2E7D32;'>
+                <h3 style='color: white; margin: 0;'>🟢 LIVE MODE - Connected to AWS</h3>
+                <p style='color: white; margin: 0.5rem 0 0 0;'>
+                    You are viewing <strong>real data</strong> from your AWS account.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown("""
+            <div style='background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%); 
+                        padding: 1rem; 
+                        border-radius: 10px; 
+                        text-align: center; 
+                        margin-bottom: 1rem;
+                        border: 3px solid #C62828;'>
+                <h3 style='color: white; margin: 0;'>🔴 LIVE MODE - Not Connected</h3>
+                <p style='color: white; margin: 0.5rem 0 0 0;'>
+                    Configure AWS credentials in the sidebar or enable Demo Mode to view sample data.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
 
 # ============================================================================
 # MAIN APPLICATION
@@ -4924,7 +5025,9 @@ def main():
     
     # Main header
     render_main_header()
-    
+    # 🆕 ADD THIS LINE - Mode indicator banner
+    render_mode_banner()
+
     # Calculate and display overall score
     overall_score = calculate_overall_compliance_score({})
     st.session_state.overall_compliance_score = overall_score
