@@ -767,16 +767,35 @@ def fetch_inspector_findings(client) -> Dict[str, Any]:
     
     try:
         # Fetch findings from Inspector v2
-        response = client.list_findings(
-            maxResults=100,
-            filterCriteria={
-                'findingStatus': [{'comparison': 'EQUALS', 'value': 'ACTIVE'}]
+        # Note: list_findings returns finding objects directly, not just ARNs
+        all_findings = []
+        next_token = None
+        
+        # Paginate through findings (max 100 per call)
+        while len(all_findings) < 100:
+            params = {
+                'maxResults': min(100 - len(all_findings), 100),
+                'filterCriteria': {
+                    'findingStatus': [{'comparison': 'EQUALS', 'value': 'ACTIVE'}]
+                }
             }
-        )
+            
+            if next_token:
+                params['nextToken'] = next_token
+            
+            response = client.list_findings(**params)
+            findings = response.get('findings', [])
+            
+            if not findings:
+                break
+            
+            all_findings.extend(findings)
+            next_token = response.get('nextToken')
+            
+            if not next_token:
+                break
         
-        finding_arns = response.get('findings', [])
-        
-        if not finding_arns:
+        if not all_findings:
             return {
                 'total_findings': 0,
                 'critical_vulns': 0,
@@ -787,13 +806,6 @@ def fetch_inspector_findings(client) -> Dict[str, Any]:
                 'linux_vulns': {'total': 0, 'critical': 0, 'high': 0, 'medium': 0, 'low': 0, 'instances': 0, 'findings': []},
                 'findings': []
             }
-        
-        # Get detailed findings - batch them in groups of 100
-        all_findings = []
-        for i in range(0, len(finding_arns), 100):
-            batch = finding_arns[i:i+100]
-            details_response = client.batch_get_findings(findingArns=batch)
-            all_findings.extend(details_response.get('findings', []))
         
         # Initialize counters
         severity_counts = {'CRITICAL': 0, 'HIGH': 0, 'MEDIUM': 0, 'LOW': 0}
@@ -847,10 +859,10 @@ def fetch_inspector_findings(client) -> Dict[str, Any]:
                 elif any(x in package_name for x in ['linux', 'ubuntu', 'debian', 'centos', 'rhel', 'kernel']):
                     is_linux = True
             
-            # Create finding entry
+            # Create finding entry with safe field access
             finding_entry = {
                 'cve': finding.get('title', 'N/A'),
-                'title': finding.get('description', 'N/A')[:100],
+                'title': finding.get('description', 'N/A')[:100] if finding.get('description') else 'N/A',
                 'severity': severity,
                 'cvss_score': finding.get('inspectorScore', 0.0),
                 'package': 'N/A',
@@ -858,9 +870,16 @@ def fetch_inspector_findings(client) -> Dict[str, Any]:
                 'fixed_version': 'N/A',
                 'affected_instances': 1,
                 'description': finding.get('description', 'N/A'),
-                'remediation': finding.get('remediation', {}).get('recommendation', {}).get('text', 'Apply security patches'),
+                'remediation': 'Apply security patches',
                 'resource_id': resource.get('id', 'N/A')
             }
+            
+            # Get remediation text if available
+            remediation_obj = finding.get('remediation', {})
+            if isinstance(remediation_obj, dict):
+                recommendation = remediation_obj.get('recommendation', {})
+                if isinstance(recommendation, dict):
+                    finding_entry['remediation'] = recommendation.get('text', 'Apply security patches')
             
             # Add package details if available
             if 'packageVulnerabilityDetails' in finding:
