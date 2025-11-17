@@ -5440,15 +5440,15 @@ Integrated Services:
 - Portfolio-Based Account Organization
 
 Features:
-✓ AI-Powered Detection & Analysis (Claude/Bedrock)
-✓ Automated Remediation with Code Generation
-✓ GitHub/GitOps Integration with Version Control
-✓ Tech Guardrails: SCP, OPA, KICS
-✓ Account Onboarding/Offboarding Automation
-✓ Policy as Code Management
-✓ Multi-Portfolio Support (Retail, Healthcare, Financial)
-✓ Real-time Compliance Monitoring
-✓ Automated CI/CD Pipeline Integration
+ AI-Powered Detection & Analysis (Claude/Bedrock)
+ Automated Remediation with Code Generation
+ GitHub/GitOps Integration with Version Control
+ Tech Guardrails: SCP, OPA, KICS
+ Account Onboarding/Offboarding Automation
+ Policy as Code Management
+ Multi-Portfolio Support (Retail, Healthcare, Financial)
+ Real-time Compliance Monitoring
+ Automated CI/CD Pipeline Integration
 
 Company: Future Minds
 Version: 4.0 - AWS Edition
