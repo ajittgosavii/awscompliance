@@ -2594,8 +2594,10 @@ def render_main_header():
     </div>
     """, unsafe_allow_html=True)
 
-def render_overall_score_card(score: float):
-    """Render overall compliance score card"""
+def render_overall_score_card(score: float, sec_hub_data: Dict = None):
+    """Render overall compliance score card with dynamic metrics"""
+    
+    # Determine grade and color
     if score >= 95:
         grade, color, status = "A+", "excellent", "Excellent"
     elif score >= 90:
@@ -2607,19 +2609,67 @@ def render_overall_score_card(score: float):
     else:
         grade, color, status = "F", "critical", "Critical"
     
+    # 🆕 GET METRICS BASED ON MODE
+    if st.session_state.get('demo_mode', False):
+        # DEMO MODE - Show sample data
+        active_accounts = "950"
+        active_accounts_delta = "3 portfolios"
+        auto_remediated = "342"
+        auto_remediated_delta = "+28 vs yesterday"
+        critical_findings = "23"
+        critical_findings_delta = "-5 from last week"
+    else:
+        # LIVE MODE - Calculate from real data
+        if st.session_state.get('aws_connected'):
+            # Get actual account count
+            try:
+                orgs_client = st.session_state.get('aws_clients', {}).get('organizations')
+                if orgs_client:
+                    accounts = get_account_list(orgs_client)
+                    active_count = len([a for a in accounts if a.get('Status') == 'ACTIVE'])
+                    active_accounts = str(active_count)
+                    active_accounts_delta = f"{len(st.session_state.get('selected_portfolio', []))} portfolios"
+                else:
+                    active_accounts = "N/A"
+                    active_accounts_delta = "No Organizations access"
+            except Exception as e:
+                active_accounts = "N/A"
+                active_accounts_delta = "Error"
+            
+            # Get remediation count
+            auto_remediated = str(len(st.session_state.get('remediation_history', [])))
+            auto_remediated_delta = "this session"
+            
+            # Get critical findings from Security Hub
+            if sec_hub_data:
+                critical_findings = str(sec_hub_data.get('critical', 0))
+                critical_findings_delta = "from Security Hub"
+            else:
+                critical_findings = "0"
+                critical_findings_delta = "No data"
+        else:
+            # Not connected
+            active_accounts = "0"
+            active_accounts_delta = "Not connected"
+            auto_remediated = "0"
+            auto_remediated_delta = "Not connected"
+            critical_findings = "0"
+            critical_findings_delta = "Not connected"
+    
+    # Render metrics
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         st.metric("Overall Compliance Score", f"{score}%", f"{grade} Grade")
     
     with col2:
-        st.metric("Active Accounts", "950", "3 portfolios")
+        st.metric("Active Accounts", active_accounts, active_accounts_delta)
     
     with col3:
-        st.metric("Auto-Remediated Today", "342", "+28 vs yesterday")
+        st.metric("Auto-Remediated Today", auto_remediated, auto_remediated_delta)
     
     with col4:
-        st.metric("Critical Findings", "23", "-5 from last week")
+        st.metric("Critical Findings", critical_findings, critical_findings_delta)
     
     # Progress bar
     st.markdown(f"""
@@ -5026,11 +5076,20 @@ def main():
     # 🆕 ADD THIS LINE - Mode indicator banner
     render_mode_banner()
 
-    # Calculate and display overall score
-    overall_score = calculate_overall_compliance_score({})
+   # Fetch Security Hub data first
+    sec_hub_data = fetch_security_hub_findings(
+        st.session_state.get('aws_clients', {}).get('securityhub')
+    )
+
+    # Calculate and display overall score with real data
+    overall_score = calculate_overall_compliance_score(sec_hub_data)
     st.session_state.overall_compliance_score = overall_score
-    render_overall_score_card(overall_score)
-    
+
+    # Pass Security Hub data to score card
+    render_overall_score_card(overall_score, sec_hub_data) 
+
+
+
     st.markdown("---")
     
     # Service status grid
