@@ -464,8 +464,6 @@ def get_github_client(token: str):
 
 def fetch_security_hub_findings(client) -> Dict[str, Any]:
     """Fetch Security Hub findings with comprehensive analysis"""
-    def fetch_security_hub_findings(client) -> Dict[str, Any]:
-    """Fetch Security Hub findings with comprehensive analysis"""
     
     # 🆕 CHECK DEMO MODE FIRST
     if st.session_state.get('demo_mode', False):
