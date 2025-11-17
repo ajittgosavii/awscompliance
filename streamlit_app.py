@@ -2551,36 +2551,110 @@ def calculate_overall_compliance_score(data: Dict[str, Any]) -> float:
         # AWS Config provides the real compliance percentage
         return float(config_data['compliance_rate'])
     
-    # Fallback: If no Config data, return 100% (assume compliant)
-    return 100.0
+    # Fallback: If no Config data, calculate from passed data or return 0%
+    if data and isinstance(data, dict):
+        # Calculate from Security Hub data if available
+        total_findings = data.get('total_findings', 0)
+        if total_findings > 0:
+            # If we have findings, calculate based on severity
+            critical = data.get('critical', 0)
+            high = data.get('high', 0)
+            medium = data.get('medium', 0)
+            # Weighted score: critical -10%, high -5%, medium -2%
+            score = max(0.0, 100.0 - (critical * 10) - (high * 5) - (medium * 2))
+            return score
+    
+    # If truly no data available, return 0% (not 100%) to be consistent
+    return 0.0
 
 def get_portfolio_stats(portfolio: str) -> Dict[str, Any]:
     """Get statistics for a specific portfolio"""
-    portfolios = {
-        'Retail': {
-            'accounts': 320,
-            'compliance_score': 89.7,
-            'critical_findings': 8,
-            'high_findings': 45,
-            'remediation_rate': 94.2
-        },
-        'Healthcare': {
-            'accounts': 285,
-            'compliance_score': 94.2,
-            'critical_findings': 3,
-            'high_findings': 28,
-            'remediation_rate': 96.8
-        },
-        'Financial': {
-            'accounts': 345,
-            'compliance_score': 92.5,
-            'critical_findings': 5,
-            'high_findings': 38,
-            'remediation_rate': 95.3
-        }
-    }
     
-    return portfolios.get(portfolio, {})
+    # CHECK DEMO MODE
+    if st.session_state.get('demo_mode', False):
+        # DEMO MODE - Return demo data
+        portfolios = {
+            'Retail': {
+                'accounts': 320,
+                'compliance_score': 89.7,
+                'critical_findings': 8,
+                'high_findings': 45,
+                'remediation_rate': 94.2
+            },
+            'Healthcare': {
+                'accounts': 285,
+                'compliance_score': 94.2,
+                'critical_findings': 3,
+                'high_findings': 28,
+                'remediation_rate': 96.8
+            },
+            'Financial': {
+                'accounts': 345,
+                'compliance_score': 92.5,
+                'critical_findings': 5,
+                'high_findings': 38,
+                'remediation_rate': 95.3
+            }
+        }
+        return portfolios.get(portfolio, {})
+    
+    # LIVE MODE - Calculate from real AWS data
+    if not st.session_state.get('aws_connected'):
+        return {
+            'accounts': 0,
+            'compliance_score': 0.0,
+            'critical_findings': 0,
+            'high_findings': 0,
+            'remediation_rate': 0.0
+        }
+    
+    # Get real data from session state
+    try:
+        # Filter accounts by portfolio
+        all_accounts = st.session_state.get('accounts', [])
+        portfolio_accounts = [acc for acc in all_accounts if portfolio.lower() in acc.get('Name', '').lower()]
+        
+        # Get findings data
+        security_findings = st.session_state.get('security_findings', [])
+        
+        # Filter findings for this portfolio
+        portfolio_findings = [
+            f for f in security_findings 
+            if any(acc['Id'] in f.get('AwsAccountId', '') for acc in portfolio_accounts)
+        ]
+        
+        # Count severities
+        critical_count = len([f for f in portfolio_findings if f.get('Severity', {}).get('Label') == 'CRITICAL'])
+        high_count = len([f for f in portfolio_findings if f.get('Severity', {}).get('Label') == 'HIGH'])
+        
+        # Calculate compliance score
+        total_findings = len(portfolio_findings)
+        if total_findings > 0:
+            compliance_score = max(0.0, 100.0 - (critical_count * 10) - (high_count * 5))
+        else:
+            compliance_score = 0.0
+        
+        # Get remediation rate
+        remediation_history = st.session_state.get('remediation_history', [])
+        portfolio_remediations = [r for r in remediation_history if r.get('portfolio') == portfolio]
+        remediation_rate = (len(portfolio_remediations) / max(1, total_findings)) * 100 if total_findings > 0 else 0.0
+        
+        return {
+            'accounts': len(portfolio_accounts),
+            'compliance_score': round(compliance_score, 1),
+            'critical_findings': critical_count,
+            'high_findings': high_count,
+            'remediation_rate': round(min(100.0, remediation_rate), 1)
+        }
+    except Exception as e:
+        # If error, return zeros
+        return {
+            'accounts': 0,
+            'compliance_score': 0.0,
+            'critical_findings': 0,
+            'high_findings': 0,
+            'remediation_rate': 0.0
+        }
 
 # ============================================================================
 # UI RENDERING FUNCTIONS
@@ -2690,16 +2764,98 @@ def render_service_status_grid():
     """Render service status overview"""
     st.markdown("### 🎛️ Service Status Overview")
     
-    services = {
-        'Security Hub': {'status': 'active', 'accounts': 'All', 'findings': 1247},
-        'AWS Config': {'status': 'active', 'accounts': 'All', 'rules': 142},
-        'GuardDuty': {'status': 'active', 'accounts': 'All', 'threats': 89},
-        'Inspector': {'status': 'active', 'accounts': 'Active', 'vulns': 234},
-        'CloudTrail': {'status': 'active', 'accounts': 'All', 'events': '2.4M/day'},
-        'Service Control Policies': {'status': 'active', 'policies': 24, 'violations': 4},
-        'OPA Policies': {'status': 'active', 'policies': 18, 'violations': 19},
-        'KICS Scanning': {'status': 'active', 'scans': 45, 'issues': 67}
-    }
+    # CHECK DEMO MODE
+    if st.session_state.get('demo_mode', False):
+        # DEMO MODE - Show demo data
+        services = {
+            'Security Hub': {'status': 'active', 'accounts': 'All', 'findings': 1247},
+            'AWS Config': {'status': 'active', 'accounts': 'All', 'rules': 142},
+            'GuardDuty': {'status': 'active', 'accounts': 'All', 'threats': 89},
+            'Inspector': {'status': 'active', 'accounts': 'Active', 'vulns': 234},
+            'CloudTrail': {'status': 'active', 'accounts': 'All', 'events': '2.4M/day'},
+            'Service Control Policies': {'status': 'active', 'policies': 24, 'violations': 4},
+            'OPA Policies': {'status': 'active', 'policies': 18, 'violations': 19},
+            'KICS Scanning': {'status': 'active', 'scans': 45, 'issues': 67}
+        }
+    else:
+        # LIVE MODE - Get real data from AWS
+        services = {}
+        
+        if st.session_state.get('aws_connected'):
+            # Security Hub
+            sec_hub_data = st.session_state.get('security_hub_data', {})
+            services['Security Hub'] = {
+                'status': 'active' if sec_hub_data else 'inactive',
+                'accounts': st.session_state.get('sec_hub_accounts', 'N/A'),
+                'findings': sec_hub_data.get('total_findings', 0)
+            }
+            
+            # AWS Config
+            config_data = st.session_state.get('config_data', {})
+            services['AWS Config'] = {
+                'status': 'active' if config_data else 'inactive',
+                'accounts': st.session_state.get('config_accounts', 'N/A'),
+                'rules': config_data.get('total_rules', 0)
+            }
+            
+            # GuardDuty
+            guardduty_data = st.session_state.get('guardduty_data', {})
+            services['GuardDuty'] = {
+                'status': 'active' if guardduty_data else 'inactive',
+                'accounts': st.session_state.get('guardduty_accounts', 'N/A'),
+                'threats': guardduty_data.get('active_threats', 0)
+            }
+            
+            # Inspector
+            inspector_data = st.session_state.get('inspector_data', {})
+            services['Inspector'] = {
+                'status': 'active' if inspector_data else 'inactive',
+                'accounts': st.session_state.get('inspector_accounts', 'N/A'),
+                'vulns': inspector_data.get('total_findings', 0)
+            }
+            
+            # CloudTrail
+            services['CloudTrail'] = {
+                'status': 'active',
+                'accounts': 'All',
+                'events': st.session_state.get('cloudtrail_events', 'N/A')
+            }
+            
+            # Service Control Policies
+            scp_data = st.session_state.get('scp_data', {})
+            services['Service Control Policies'] = {
+                'status': 'active',
+                'policies': len(scp_data.get('policies', [])),
+                'violations': sum(p.get('Violations', 0) for p in scp_data.get('policies', []))
+            }
+            
+            # OPA Policies
+            opa_data = st.session_state.get('opa_data', {})
+            services['OPA Policies'] = {
+                'status': 'active',
+                'policies': len(opa_data.get('policies', [])),
+                'violations': sum(p.get('Violations', 0) for p in opa_data.get('policies', []))
+            }
+            
+            # KICS Scanning
+            kics_data = st.session_state.get('kics_data', {})
+            services['KICS Scanning'] = {
+                'status': 'active',
+                'scans': kics_data.get('total_scans', 0),
+                'issues': kics_data.get('total_issues', 0)
+            }
+        else:
+            # Not connected - show inactive
+            services = {
+                'Security Hub': {'status': 'inactive', 'accounts': 'N/A', 'findings': 0},
+                'AWS Config': {'status': 'inactive', 'accounts': 'N/A', 'rules': 0},
+                'GuardDuty': {'status': 'inactive', 'accounts': 'N/A', 'threats': 0},
+                'Inspector': {'status': 'inactive', 'accounts': 'N/A', 'vulns': 0},
+                'CloudTrail': {'status': 'inactive', 'accounts': 'N/A', 'events': 0},
+                'Service Control Policies': {'status': 'inactive', 'policies': 0, 'violations': 0},
+                'OPA Policies': {'status': 'inactive', 'policies': 0, 'violations': 0},
+                'KICS Scanning': {'status': 'inactive', 'scans': 0, 'issues': 0}
+            }
     
     cols = st.columns(4)
     
@@ -2925,11 +3081,32 @@ def render_policy_guardrails():
         st.markdown("---")
         st.markdown("### 📊 Recent AI Activity")
         
-        recent_activities = [
-            {"time": "2 mins ago", "action": "Auto-remediated", "resource": "aws-guardrails-mQdkEr", "status": "success"},
-            {"time": "15 mins ago", "action": "Detected violation", "resource": "ServiceRegionsApproved-SCP", "status": "pending"},
-            {"time": "1 hour ago", "action": "Generated fix", "resource": "IAM_Restrictions SCP", "status": "success"},
-        ]
+        # CHECK DEMO MODE
+        if st.session_state.get('demo_mode', False):
+            # DEMO MODE - Show demo activity
+            recent_activities = [
+                {"time": "2 mins ago", "action": "Auto-remediated", "resource": "aws-guardrails-mQdkEr", "status": "success"},
+                {"time": "15 mins ago", "action": "Detected violation", "resource": "ServiceRegionsApproved-SCP", "status": "pending"},
+                {"time": "1 hour ago", "action": "Generated fix", "resource": "IAM_Restrictions SCP", "status": "success"},
+            ]
+        else:
+            # LIVE MODE - Get real remediation history
+            remediation_history = st.session_state.get('remediation_history', [])
+            if remediation_history:
+                # Show last 3 remediation activities
+                recent_activities = []
+                for remediation in remediation_history[-3:]:
+                    recent_activities.append({
+                        "time": remediation.get('timestamp', 'Unknown'),
+                        "action": remediation.get('action', 'Remediation'),
+                        "resource": remediation.get('resource', 'Unknown resource'),
+                        "status": remediation.get('status', 'success')
+                    })
+            else:
+                # No activity yet
+                recent_activities = [
+                    {"time": "N/A", "action": "No activity", "resource": "No remediations yet", "status": "pending"}
+                ]
         
         for activity in recent_activities:
             status_color = "#10b981" if activity['status'] == "success" else "#f59e0b"
@@ -4441,12 +4618,36 @@ def render_github_gitops_tab():
         with col1:
             st.markdown("#### 📝 Recent Commits")
             
-            commits = [
-                {'message': 'Add SCP for S3 encryption', 'author': 'security-team', 'time': '2 hours ago', 'sha': 'abc123', 'type': 'SCP'},
-                {'message': 'Update OPA policy for Kubernetes', 'author': 'devops-team', 'time': '5 hours ago', 'sha': 'def456', 'type': 'OPA'},
-                {'message': 'Onboard new account: prod-retail-010', 'author': 'automation', 'time': '1 day ago', 'sha': 'ghi789', 'type': 'Config'},
-                {'message': 'Auto-remediation: Fix S3 public access', 'author': 'claude-ai-bot', 'time': '2 days ago', 'sha': 'jkl012', 'type': 'Remediation'},
-            ]
+            # CHECK DEMO MODE
+            if st.session_state.get('demo_mode', False):
+                # DEMO MODE - Show demo commits
+                commits = [
+                    {'message': 'Add SCP for S3 encryption', 'author': 'security-team', 'time': '2 hours ago', 'sha': 'abc123', 'type': 'SCP'},
+                    {'message': 'Update OPA policy for Kubernetes', 'author': 'devops-team', 'time': '5 hours ago', 'sha': 'def456', 'type': 'OPA'},
+                    {'message': 'Onboard new account: prod-retail-010', 'author': 'automation', 'time': '1 day ago', 'sha': 'ghi789', 'type': 'Config'},
+                    {'message': 'Auto-remediation: Fix S3 public access', 'author': 'claude-ai-bot', 'time': '2 days ago', 'sha': 'jkl012', 'type': 'Remediation'},
+                ]
+            else:
+                # LIVE MODE - Get real commits from GitHub
+                commits = []
+                github_client = st.session_state.get('github_client')
+                repo_name = st.session_state.get('github_repo', '')
+                
+                if github_client and repo_name:
+                    try:
+                        # This is a placeholder - actual implementation would fetch from GitHub API
+                        # For now, show message to indicate live mode
+                        commits = [
+                            {'message': 'Fetching real commits from GitHub...', 'author': 'N/A', 'time': 'N/A', 'sha': 'N/A', 'type': 'Info'}
+                        ]
+                    except Exception as e:
+                        commits = [
+                            {'message': 'Unable to fetch commits', 'author': 'Error', 'time': str(e)[:50], 'sha': 'N/A', 'type': 'Error'}
+                        ]
+                else:
+                    commits = [
+                        {'message': 'GitHub not configured', 'author': 'N/A', 'time': 'Configure in sidebar', 'sha': 'N/A', 'type': 'Info'}
+                    ]
             
             for commit in commits:
                 st.markdown(f"""
@@ -4460,12 +4661,34 @@ def render_github_gitops_tab():
         with col2:
             st.markdown("#### 🔄 CI/CD Pipeline Status")
             
-            pipelines = [
-                {'name': 'Policy Validation', 'status': 'success', 'duration': '2m 34s', 'last_run': '10 mins ago'},
-                {'name': 'KICS Scan', 'status': 'running', 'duration': '1m 12s', 'last_run': 'Running now'},
-                {'name': 'Terraform Apply', 'status': 'pending', 'duration': '-', 'last_run': 'Queued'},
-                {'name': 'OPA Policy Test', 'status': 'success', 'duration': '45s', 'last_run': '1 hour ago'},
-            ]
+            # CHECK DEMO MODE
+            if st.session_state.get('demo_mode', False):
+                # DEMO MODE - Show demo pipelines
+                pipelines = [
+                    {'name': 'Policy Validation', 'status': 'success', 'duration': '2m 34s', 'last_run': '10 mins ago'},
+                    {'name': 'KICS Scan', 'status': 'running', 'duration': '1m 12s', 'last_run': 'Running now'},
+                    {'name': 'Terraform Apply', 'status': 'pending', 'duration': '-', 'last_run': 'Queued'},
+                    {'name': 'OPA Policy Test', 'status': 'success', 'duration': '45s', 'last_run': '1 hour ago'},
+                ]
+            else:
+                # LIVE MODE - Get real pipeline status
+                pipelines = []
+                github_client = st.session_state.get('github_client')
+                
+                if github_client:
+                    try:
+                        # Placeholder for real pipeline status
+                        pipelines = [
+                            {'name': 'Fetching pipeline status...', 'status': 'pending', 'duration': 'N/A', 'last_run': 'Loading'}
+                        ]
+                    except Exception as e:
+                        pipelines = [
+                            {'name': 'Error fetching pipelines', 'status': 'failed', 'duration': 'N/A', 'last_run': 'Error'}
+                        ]
+                else:
+                    pipelines = [
+                        {'name': 'GitHub not configured', 'status': 'inactive', 'duration': 'N/A', 'last_run': 'N/A'}
+                    ]
             
             for pipeline in pipelines:
                 status_icon = {'success': '✅', 'running': '🔄', 'pending': '⏳', 'failed': '❌'}.get(pipeline['status'], '⚪')
@@ -4484,15 +4707,51 @@ def render_github_gitops_tab():
         # Repository Statistics
         st.markdown("#### 📈 Repository Statistics")
         
+        # CHECK DEMO MODE
+        if st.session_state.get('demo_mode', False):
+            # DEMO MODE - Show demo stats
+            total_commits = "1,247"
+            commits_delta = "+12 this week"
+            active_branches = "8"
+            branches_delta = "+2"
+            pull_requests = "3"
+            pr_delta = "0"
+            policy_files = "156"
+            files_delta = "+5"
+        else:
+            # LIVE MODE - Get real GitHub stats
+            github_client = st.session_state.get('github_client')
+            repo_name = st.session_state.get('github_repo', '')
+            
+            if github_client and repo_name:
+                # Placeholder for real stats
+                total_commits = "N/A"
+                commits_delta = "Loading..."
+                active_branches = "N/A"
+                branches_delta = "Loading..."
+                pull_requests = "N/A"
+                pr_delta = "Loading..."
+                policy_files = "N/A"
+                files_delta = "Loading..."
+            else:
+                total_commits = "0"
+                commits_delta = "Not configured"
+                active_branches = "0"
+                branches_delta = "Not configured"
+                pull_requests = "0"
+                pr_delta = "Not configured"
+                policy_files = "0"
+                files_delta = "Not configured"
+        
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("Total Commits", "1,247", delta="+12 this week")
+            st.metric("Total Commits", total_commits, delta=commits_delta)
         with col2:
-            st.metric("Active Branches", "8", delta="+2")
+            st.metric("Active Branches", active_branches, delta=branches_delta)
         with col3:
-            st.metric("Pull Requests", "3", delta="0")
+            st.metric("Pull Requests", pull_requests, delta=pr_delta)
         with col4:
-            st.metric("Policy Files", "156", delta="+5")
+            st.metric("Policy Files", policy_files, delta=files_delta)
     
     # ==================== DETECTION TAB ====================
     with gitops_tabs[1]:
