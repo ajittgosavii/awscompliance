@@ -2534,18 +2534,25 @@ def offboard_aws_account(
 # ============================================================================
 
 def calculate_overall_compliance_score(data: Dict[str, Any]) -> float:
-    """Calculate overall compliance score across all portfolios"""
-    # Simulated calculation
-    base_score = 91.3
+    """Calculate overall compliance score based on AWS Config"""
     
-    # Adjust based on findings
-    critical = data.get('critical', 0)
-    high = data.get('high', 0)
+    # 🆕 CHECK DEMO MODE FIRST
+    if st.session_state.get('demo_mode', False):
+        return 91.3  # Demo value
     
-    penalty = (critical * 0.5) + (high * 0.1)
-    final_score = max(0, base_score - penalty)
+    # LIVE MODE
+    if not st.session_state.get('aws_connected'):
+        return 0.0
     
-    return round(final_score, 1)
+    # Get AWS Config compliance rate (most accurate)
+    config_data = st.session_state.get('config_data', {})
+    
+    if config_data and 'compliance_rate' in config_data:
+        # AWS Config provides the real compliance percentage
+        return float(config_data['compliance_rate'])
+    
+    # Fallback: If no Config data, return 100% (assume compliant)
+    return 100.0
 
 def get_portfolio_stats(portfolio: str) -> Dict[str, Any]:
     """Get statistics for a specific portfolio"""
